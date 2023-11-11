@@ -1,0 +1,41 @@
+html, body{
+	margin: 0;
+	border: 0;
+	padding: 0;
+	width: 100%;
+}
+
+.{
+	min-width: 100%;
+}
+.bg{
+	height: 92vh;
+	width: 100vw;
+	position: relative;
+}
+
+.btn-signin {
+   position: absolute;
+   top: 40%;
+   left: 40%;
+   width: 20%;
+	 padding: 20px;
+}
+.btn-signin:hover{
+	background: #fff;
+	color: blue;
+	cursor: pointer;
+}
+.btn-login:hover{
+	cursor: pointer;
+}
+.sign{
+	width: 40%;
+	margin-top: 7%;
+}
+
+
+.messages{
+	margin: 20px;
+	margin-top: 5%;
+}

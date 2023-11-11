@@ -1,51 +1,70 @@
-<?php
 
-require_once __DIR__ .'/vendor/autoload.php';
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
 
-// Connecting to RabbitMQ
-$connection = new AMQPStreamConnection('172.26.177.167', 5672, 'test', 'test');
-$channel = $connection->channel();
 
-// Declaring the exchange to send the message
-$channel->exchange_declare('frontend_exchange', 'direct', false, false, false);
-// Routing key address so RabbitMQ knows where to send the message
-$routing_key = "backend";
 
-// Function for Receiving the message sent from database
 
-// Login Data
-$username = "John";
-$password = "1234";
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Page</title>
+   <link rel="stylesheet" type="text/css" href="public/css/bootstrap.min.css" />
+	<link rel="stylesheet" type="text/css" href="public/css/main.css" />
+    
+     <link rel="stylesheet" type="text/css" href="js/css/style.css" />
+ <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
 
-// Creating array to store message type and login data
-$send = array();
-if (empty($send)) {
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+<body>
+ 
+<div class="main">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="index.php"></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <div class="navbar-nav">
+        <a class="nav-item nav-link active" href="index.php">Home <span class="sr-only">(current)</span></a>
+        <a class="nav-item nav-link" href="signup.php">Sign Up</a>
+       
+      </div>
+    </div>
+  </nav>
 
-	$send['type'] = "Login";
-	$send['username'] = $username;
-	$send['password'] = $password;
-}
 
-// Turining data into a string type
-//$login_data = var_dump(implode(",", $send));
-$login_data = json_encode($send);
+<div class="login-block login-box">
+<div class="logo">
+	
+    	<img src="22.png"/>
+		
+    </div> 
+ 
+ 
+      
+    <form action="sendlogin.php" method="post">
+       
+     <input type="text" placeholder="Username" id="username" name="username" class="username" required />
+     
+	    <input type="password" placeholder="Password" id="password" name="password" class="password" required />
+        <button type="submit" value="Log In" name="submit" class="login">Log In</button>
+ 
+ <strong/><a href="signup.php"> <p style="text-align:center; font-size:14px; width:24%;position:relative;top:35px; left:6px"/>Sign up?</a>
+ 
+  <a href="../RecipeApp/templates/app.py/"><p style="text-align:center;font-size:14px; width: 150%;top:3px; right:10px"/>Forgot password?</a>
+ 
+ 
+ 
 
-// Creating AMQPMessage For Delivery
-$msg = new AMQPMessage(
-	$login_data,
-	array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
-	//array('delivery_mode' => 2)
-);
+  
+  
+  </form>
+ 
+  
+</div>
 
-// Publishing data to RabbitMQ exchange for processing
-$channel->basic_publish($msg, 'frontend_exchange', $routing_key);
 
-echo ' [x] Frontend Task: Sent Login to Messenger', "\n";
-print_r($send);
-echo "\n\n";
-
-$channel->close();
-$connection->close();
-?>
+</div>
+    
+</body>
+</html>
