@@ -1,0 +1,97 @@
+
+
+.login-block {
+    width: 220px;
+    padding: 20px;
+    border-radius: 5px;
+    margin: 110px auto;
+	background:#fff;
+    border-top: 5px solid #ff656c;
+}
+
+.fullname,.username,.password,.Fname,.Lname,.Email,.Address,.Pnumber,.{
+    //width: 100%;
+    //height: 42px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-family: Montserrat;
+    //padding: 0 20px 0 50px;
+    outline: none;
+}
+
+
+.username {
+    //background: #fff url('4.png') 20px top no-repeat;
+    background-size: 16px 80px;
+	height: 42px;
+}
+
+
+.password {
+    background: #fff  20px top no-repeat;
+    background-size:100%;
+	height: 60%;
+	 width: 130%;
+	
+}
+
+.Fname {
+    background: #fff  20px top no-repeat;
+    background-size:100%;
+	height: 60%;
+	 width: 130%;
+	
+}
+
+.Lname {
+    background: #fff  20px top no-repeat;
+    background-size:100%;
+	height: 60%;
+	 width: 130%;	
+}
+
+.Email {
+    background: #fff  20px top no-repeat;
+    background-size:100%;
+	height: 60%;
+	 width: 130%;	
+}
+
+.Address {
+    background: #fff  20px top no-repeat;
+    background-size:100%;
+	height: 60%;
+	 width: 130%;	
+}
+
+.Pnumber {
+    background: #fff  20px top no-repeat;
+    background-size:100%;
+	height: 60%;
+	 width: 130%;	
+}
+.login {
+    width: 70%;
+    height: 40px;
+    background: #ff656c;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid #e15960;
+    color: #fff;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 14px;
+    font-family: Montserrat;
+    outline: none;
+    cursor: pointer;
+}
+.login:hover {
+    background: #ff7b81;
+}
+
+.logo{width:120px; height:120px; margin:auto; border:5px solid #fff; border-radius:50%; margin-bottom:20px;}
+.logo img{width:100%; height:100%; border-radius:50%} 
+#hide,#show{cursor:pointer}
