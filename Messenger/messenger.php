@@ -3,7 +3,7 @@
 require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 
-$connection = new AMQPStreamConnection('172.26.177.167', 5672, 'test', 'test');
+$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'galijeff', 'Rabbit123');
 $channel = $connection->channel();
 
 /*
