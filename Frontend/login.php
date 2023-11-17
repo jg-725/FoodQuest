@@ -1,4 +1,12 @@
+<?php
+session_start();
 
+// Checks if the user is logged in. If they are, redirect them to the home page as login.php should not be accessable to logged in users.
+if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
+  header("Location: home.php");
+  exit();
+}
+?>
 
 
 
@@ -38,11 +46,8 @@
 	
     	<img src="22.png"/>
 		
-    </div> 
- 
- 
-      
-    <form action="sendlogin.php" method="post">
+    </div>    
+    <form method="POST">
        
      <input type="text" placeholder="Username" id="username" name="username" class="username" required />
      
@@ -51,16 +56,27 @@
  
  <strong/><a href="signup.php"> <p style="text-align:center; font-size:14px; width:24%;position:relative;top:35px; left:6px"/>Sign up?</a>
  
-  <a href="../RecipeApp/templates/app.py/"><p style="text-align:center;font-size:14px; width: 150%;top:3px; right:10px"/>Forgot password?</a>
+  <a href="forgot-password.php"><p style="text-align:center;font-size:14px; width: 150%;top:3px; right:10px"/> Forgot password?</a>
  
- 
- 
-
-  
-  
   </form>
+ <?php
+      session_start(); // Start the session
+
+      require_once '/home/FoodQuest/Frontend/vendor/autoload.php';
+
+      use PhpAmqpLib\Connection\AMQPStreamConnection;
+      use PhpAmqpLib\Message\AMQPMessage;
+
+      if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+        
+  // Create a connection to RabbitMQ
  
-  
+ 
+ 
+ }
+  ?>
 </div>
 
 

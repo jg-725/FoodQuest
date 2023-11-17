@@ -1,0 +1,59 @@
+//body( background:#1E1E1E;)
+.chat
+{
+		list-style: none;
+		margin: 0;
+		padding: 0;
+
+}
+.chat li 
+{
+	margin-bottom: 10px;
+	padding-bottom:5px;
+	border-bottom: 1px dotted #B3A9A9;
+	
+}
+.chat li.left.chat-body
+{
+	margin-right: 60px;
+	
+}
+.chat li.right.chat.body
+{
+	margin-right:60px;
+}
+.chat li.chat-body p
+{
+	margin:0;
+	color:#777777;
+}
+
+.panel.slidedown.glyphicon, .chat.glyphicon
+{
+	margin-right:5px;
+}
+.panel-body
+{
+	
+}
+::-webkit-scrollbar-track
+{
+	-wekit-box-shadow: inset 0 0 6px rgba(0,0,0,3);
+	background-color: #F5F5F5;
+}
+::-webkit-scrollbar 
+{
+	width:12px;
+	background-color:#F5F5F5;
+}
+::-webkit-scrollbar-thunb
+{
+	-webkit-scrollbar-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color:#555;
+}
+.bg-header{ border-buttom:sold 1px #E4E4E4; height:100px; background:#F8F8F8;}
+.login-bg{ border-radius:3px; padding:10px; background-color:FFFFFF; border:1px sold #D8D8D8; text-align:center; width:300px; margin-top:-60px margin-left:-40px;}
+.login-bg h1 {text-align:center; font-size:24px;}
+form-header {margin-bottom:20px; border-buttom:sold 1px #E5E5E5;}
+.form-body .form-body .btn .btn-danger, .btn-success{margin:12px;}
+.form-control {margin:10px 2px;;}
