@@ -19,8 +19,6 @@
 					<span class="navbar-toggler-icon"></span>
 				</button>
 				<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-					<div class="navbar-nav">
-						<a class="nav-item nav-link active" href="index.php">Home <span class="sr-only">(current)</span></a>
 						<a class="nav-item nav-link" href="signup.php">Sign Up</a>
 						<a class="nav-item nav-link" href="login.php">Log In</a>
 					</div>
@@ -28,7 +26,7 @@
 		</nav>
 
 		<img src="public/images/bg.jpg" class="img-fluid bg" />
-		<a class="btn btn-primary btn-signin" href="login.php">Member Login</a>
+		<a class="btn btn-primary btn-signin" href="login.php">FoodQuest Member Login</a>
 
 	</div>
 

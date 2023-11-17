@@ -1,8 +1,24 @@
+<?php
+session_start();
+
+// Checks if the user is logged in. If they are, redirect them to the home page as index.php should not be accessable to logged in users.
+if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
+  header("Location: home.php");
+  exit();
+}
+?>
+
+
+
 <!DOCTYPE html>
 <html class="wide wow-animation" lang="en">
   <head>
     <title>Home</title>
     <meta charset="utf-8">
+    
+	<link rel="stylesheet" type="text/css" href="public/css/bootstrap.min.css" />
+	<link rel="stylesheet" type="text/css" href="public/css/main.css" />
+    
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="icon" href="images/favicon.png" type="image/x-icon">
@@ -43,19 +59,14 @@
                     <button class="rd-navbar-toggle" data-rd-navbar-toggle=".rd-navbar-nav-wrap"><span></span></button>
                     <!--RD Navbar Brand-->
                     <div class="rd-navbar-brand">
-                      <!--Brand--><a class="brand" href="index.html"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
+                      <!--Brand--><a class="brand" href="index.php"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
                     </div>
                   </div>
                   <div class="rd-navbar-nav-wrap">
                     <ul class="rd-navbar-nav">
-                      <li class="rd-nav-item"><a class="rd-nav-link" href="#programs">Programs</a>
-                      </li>
-                      <li class="rd-nav-item"><a class="rd-nav-link" href="#about">About</a>
-                      </li>
-                      <li class="rd-nav-item"><a class="rd-nav-link" href="#clients">Clients</a>
-                      </li>
+                
 				
-					  <li class="rd-nav-item"><a class="rd-nav-link" href="login.php">Login</a>
+ <li class="rd-nav-item"><a class="rd-nav-link" href="login.php">Login</a>
                       </li>
 					  
 		  <li class="rd-nav-item"><a class="rd-nav-link" href="signup.php">Sign Up</a>
@@ -64,66 +75,16 @@
                   </div>
                 </div>
               </div>
-              <button class="rd-navbar-aside-open-toggle" data-custom-toggle="#rd-navbar-aside"></button>
-              <div class="rd-navbar-aside" id="rd-navbar-aside">
-                <h3>Complete your order</h3>
+              
+               
                 <!--RD Mailform-->
-                <form class="rd-form rd-mailform" data-form-output="form-output-global" data-form-type="contact" method="post" action="bat/rd-mailform.php">
-                  <div class="row row-22">
-                    <div class="col-12">
-                      <div class="form-wrap">
-                        <!-- Select 2-->
-                        <select class="form-input select" data-placeholder="Choose a food package" data-constraints="@Required">
-                          <option label="Choose a food package"></option>
-                          <option value="1">Detox</option>
-                          <option value="2">Balanced</option>
-                          <option value="3">Vegan</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-12">
-                      <div class="form-wrap">
-                        <input class="form-input" id="contact-email" type="email" name="email" data-constraints="@Email @Required">
-                        <label class="form-label" for="contact-email">E-mail</label>
-                      </div>
-                    </div>
-                    <div class="col-12">
-                      <div class="form-wrap">
-                        <input class="form-input" id="contact-phone" type="text" name="phone" data-constraints="@Numeric">
-                        <label class="form-label" for="contact-phone">Phone</label>
-                      </div>
-                    </div>
-					
-					<div class="col-12">
-					<div class="new">
-									<form>
-									<div class="form-group">
-									  <input type="checkbox" id="Cheddar Cheese">
-									  <label for="Cheddar Cheese">Cheddar Cheese</label>
-									</div>
-									<div class="form-group">
-									  <input type="checkbox" id="Broccoli">
-									  <label for="Broccoli">Broccoli</label>
-									</div>
-									<div class="form-group">
-									  <input type="checkbox" id="Avocado">
-									  <label for="Avocado">Avocado</label>
-									</div>
-								  </form>
-								</div>
-					</div>
-                    <div class="col-12">
-                      <div class="form-wrap">
-                        <label class="form-label" for="contact-message">Comment</label>
-                        <textarea class="form-input" id="contact-message" name="message" data-constraints="@Required"></textarea>
-                      </div>
-                    </div>
-					
-                    <div class="col-12">
-                      <button class="button button-primary" type="submit">order now</button>
-                    </div>
-                  </div>
-                </form>
+         
+         
+         
+         
+         
+         
+         
               </div>
             </nav>
           </div>
@@ -232,58 +193,19 @@
       <!-- What we Offer-->
       <section class="section novi-bg novi-bg-img section-md-4 bg-primary">
         <div class="container">
-          <div class="text-center">
-            <h3>What we Offer</h3>
-            <h2>Food packages</h2>
-          </div>
+         
           <div class="row row-50 justify-content-center">
             <div class="col-xl-4 col-md-6">
-              <!-- Product-->
-              <div class="product novi-bg bg-default">
-                <h3 class="product-title">detox</h3><img class="product-img" src="images/product-01-176x176.png" alt="" width="176" height="88"/>
-                <div class="product-price">
-                  <div class="product-price-header">
-                    <div class="product-price-currency">$</div>
-                    <div class="product-price-value">15</div>
-                  </div>
-                  <div class="product-price-footer">per day</div>
-                </div>
-                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" href="#">Order now</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
+            
+                
               </div>
             </div>
             <div class="col-xl-4 col-md-6">
               <!-- Product-->
-              <div class="product novi-bg bg-default">
-                <h3 class="product-title">balanced</h3><img class="product-img" src="images/product-02-176x176.png" alt="" width="176" height="88"/>
-                <div class="product-price">
-                  <div class="product-price-header">
-                    <div class="product-price-currency">$</div>
-                    <div class="product-price-value">30</div>
-                  </div>
-                  <div class="product-price-footer">per day</div>
-                </div>
-                <p class="product-text">If you need daily balanced menu including breakfast &amp; dinner, then Balanced package is what you need!</p><a class="button button-primary" href="#">Order now</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
-              </div>
-            </div>
+              
             <div class="col-xl-4 col-md-6">
               <!-- Product-->
-              <div class="product novi-bg bg-default">
-                <h3 class="product-title">Vegan</h3><img class="product-img" src="images/product-03-176x176.png" alt="" width="176" height="88"/>
-                <div class="product-price">
-                  <div class="product-price-header">
-                    <div class="product-price-currency">$</div>
-                    <div class="product-price-value">22</div>
-                  </div>
-                  <div class="product-price-footer">per day</div>
-                </div>
-                <p class="product-text">Special menu developed for our vegan clients who appreciate healthy and plant-based food.</p><a class="button button-primary" href="#">Order now</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
-              </div>
-            </div>
-          </div>
-        </div>
+              
       </section>
 
       <!-- How it Works-->
@@ -362,65 +284,19 @@
             </div>
           </div>
         </div>
-        <div class="box-custom-3">
-          <div class="box-custom-3-img-wrap"><img src="images/home-01-382x375.png" alt="" width="382" height="187"/>
-          </div>
-          <div class="box-custom-3-img-wrap"><img src="images/home-02-293x293.png" alt="" width="293" height="146"/>
-          </div>
-          <div class="box-custom-3-img-wrap"><img src="images/home-03-461x407.png" alt="" width="461" height="203"/>
-          </div>
-          <div class="box-custom-3-img-wrap"><img src="images/home-04-191x191.png" alt="" width="191" height="95"/>
-          </div>
-        </div>
-      </section>
+        
 
       <!-- Testimonials-->
-      <section class="section novi-bg novi-bg-img section-md-3 bg-default" id="clients">
-        <div class="container">
-          <div class="row row-40 align-items-center">
-            <div class="col-lg-6">
-              <div class="owl-pagination-custom" id="owl-pagination-custom">
-                <div class="data-dots-custom" data-owl-item="0"><img src="images/shutter-testimonials-01-179x179.png" alt="" width="179" height="89"/>
-                </div>
-                <div class="data-dots-custom" data-owl-item="1"><img src="images/shutter-testimonials-02-306x306.png" alt="" width="306" height="153"/>
-                </div>
-                <div class="data-dots-custom" data-owl-item="2"><img src="images/testimonials-03-179x179.png" alt="" width="179" height="89"/>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <h3>what Our clients say</h3>
-              <h2>testimonials</h2>
-              <!-- Owl Carousel-->
-              <div class="quote-classic-wrap">
-                <div class="quote-classic-img"><img src="images/quote-37x29.png" alt="" width="37" height="14"/>
-                </div>
-                <div class="owl-carousel owl-carousel-classic" data-items="1" data-dots="true" data-loop="false" data-autoplay="false" data-mouse-drag="false" data-dots-custom="#owl-pagination-custom">
-                  <div class="quote-classic">
-                    <p class="big">I have tried a lot of food delivery services but FoodQuest is something out of this world! Their food is really healthy and it tastes great, which is why I recommend this company to all my friends!</p>
-                    <h3 class="quote-classic-name">Sophie Smith</h3>
-                  </div>
-                  <div class="quote-classic">
-                    <p class="big">Both the food and your customer service are excellent in every way, and I just wanted to express how happy I am with your company. Wishing you all the best!</p>
-                    <h3 class="quote-classic-name">Ann peters</h3>
-                  </div>
-                  <div class="quote-classic">
-                    <p class="big">Thank you so much for your Balanced menu, it has been such a big help to me and I feel the food I am eating from you has really helped boost my immune system.</p>
-                    <h3 class="quote-classic-name">Felix Opoku</h3>
-                  </div>
-                </div>
-              </div><a class="button button-primary button-sm" href="#">Send Your Review</a>
-            </div>
-          </div>
-        </div>
-      </section>
+      
 
       <section><img class="img-responsive" src="images/banner-bottom-2050x310.jpg" alt="" width="2050" height="155"/></a></section>
       <footer class="section footer-classic">
         <div class="container">
           <div class="row row-50 justify-content-between">
             <div class="col-xl-3 col-md-6">
-              <!--Brand--><a class="brand" href="index.html"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
+            
+              <!--Brand--><a class="brand" href="index.php"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
+              
               <p class="rights"><span>&copy;&nbsp;</span><span class="copyright-year"></span><span>&nbsp;</span><span>FoodQuest</span><span>.&nbsp;All Rights Reserved. Design by Group10</span></p>
             </div>
             <div class="col-xl-3 col-md-6">
@@ -455,22 +331,8 @@
                 </li>
               </ul>
             </div>
-            <div class="col-xl-2 col-md-6">
-              <p class="footer-classic-title">Quick Links</p>
-              <ul class="footer-classic-nav">
-                <li><a href="#">How It Works</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Why Choose Us</a></li>
-              </ul>
-            </div>
-            <div class="col-xl-2 col-md-6">
-              <p class="footer-classic-title">Food Packages</p>
-              <ul class="footer-classic-nav">
-                <li><a href="#">Detox</a></li>
-                <li><a href="#">Balanced</a></li>
-                <li><a href="#">Vegan</a></li>
-              </ul>
-            </div>
+            
+            
           </div>
         </div>
       </footer>

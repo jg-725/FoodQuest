@@ -1,14 +1,12 @@
-<?
-if(isset($_SESSION["username"])) { //is the user already logged in?
+<?php
+session_start();
 
-redirect_to('login.php')
-
+// Checks if the user is logged in. If they are, redirect them to the home page as register.php should not be accessable to logged in users.
+if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
+  header("Location: home.php");
+  exit();
 }
-
-header("location:login.php")
-
 ?>
-
 
 <!DOCTYPE html>
 
