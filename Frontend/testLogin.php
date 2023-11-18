@@ -23,7 +23,6 @@ $password = "Pass123";
 $send = array();
 if (empty($send)) {
 
-	$send['type'] = "Login";
 	$send['username'] = $username;
 	$send['password'] = $password;
 }
@@ -65,7 +64,7 @@ $channelReceiveBackend->queue_declare('frontend_mailbox', false, false, false, f
 // Establishing callback variable for processing messages from database
 $receiveCallback1 = function ($msgContent) {
 
-	// Decoding received msg from database into usuable code for processing
+	// Decoding return msg from backend into usuable code for processing
 	$decodedBackend = json_decode($msgContent->getBody(), true);
 
 	$validUser = $decodedBackend['validUser'];
@@ -100,5 +99,55 @@ while ($channelReceiveBackend->is_open()) {
 // Terminating channel and connection for receivin msgs
 $channelReceiveBackend->close();
 $connectionReceiveBackend->close();
+
+
+
+//      --- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---
+
+// Connecting to RabbitMQ
+$connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+$channelReceiveDatabase = $connectionReceiveDatabase->channel();
+
+//      DECLARING NON durable queue for testing
+$channelReceiveDatabase->queue_declare('frontend_mailbox', false, false, false, false);
+
+// Establishing callback variable for processing messages from database
+$receiverCallback2 = function ($msgContent) {
+
+        // Decoding received msg from database into usuable code for processing
+        $decodedDatabase = json_decode($msgContent->getBody(), true);
+
+        $userExists = $decodedDatabase['userExists'];
+
+        /* 2 IF statements: Checking if user exists */
+
+        // Commands to be executed if username/password does not match
+        if ($userExists == false) {
+                echo "Entered Username already exists\n";
+		echo "TRY AGAIN\n\n";
+                //echo "<script>alert('Username or password does not exist in database');</script>";
+                //echo "<script>location.href='login.php';</script>";
+        }
+
+        // Commands to be executed if user exists
+        if ($userExists == true) {
+                //die(header("location:home.php"));
+		echo "[x] Welcome user";
+        }
+}
+
+// Triggering the process to consume msgs from DATABASE IF USER EXISTS
+$channelReceiveDatabase->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback2);
+
+// while loop to keep checking for incoming messages from database
+while ($channelReceiveDatabase->is_open()) {
+        $channelReceiveDatabase->wait();
+        break;
+}
+
+// Terminating channel and connection for receivin msgs
+$channelReceiveDatabase->close();
+$connectionReceiveDatabase->close();
 
 ?>
