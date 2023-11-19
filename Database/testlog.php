@@ -56,3 +56,15 @@
 		'username' => $username,
 		'id' => $id
 	]);
+
+	global $connection;
+
+	$query=" SELECT Users FROM FoodQuest ORDER BY Msg_ID DESC";
+	$run=mysqli_query($connection, $query);
+	confirm_query($run);
+	$messages=array();
+	while($message=mysqli_fetch_assoc($run))
+	{
+		$messages[]= array('sender' =>$message['Sender'] , 'message' =>$message['Message'] );
+	}
+	return $messages;
