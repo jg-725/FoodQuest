@@ -39,5 +39,27 @@
 	
 	}
 }
+
+function send_msg($sender,$message)
+{
+	global $connection;
+	if(!empty($sender) && !empty($message))
+	{
+		$sender=mysqli_real_escape_string($connection, $sender);
+		$message=mysqli_real_escape_string($connection, $message);
+		$query="INSERT INTO chat VALUES(null,'{$sender}','{$message}')";
+		if($run=mysqli_query($connection, $query))
+		{
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	else{
+		return false;
+	}
+}
+?>
 	// Close the database connection
 	mysqli_close($conn);
