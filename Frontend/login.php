@@ -113,14 +113,31 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 		$senderChannel->close();
 		$senderConnection->close();
 
-		/*	Receiving/Consuming From Database	*/
+		/*
+
+			TODO FOR JEFF: ADD THE RECEIVING CODE FOR BACKEND LOGIN ERRORS
+			SAME PROCESS AS DATBASE
+			exchange -> queue -> binding key -> queue bind -> callback -> basic consume
+
+		*/
+
+		//	Receiving/Consuming From Database
 
 		// Connecting to Main RabbitMQ Node IP
         	$receiverConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
         	$receiverChannel = $receiverConnection->channel();  //Establishing Channel Connection for communication
 
+		// Exchange to listen for
+		$receiverChannel->exchange_declare('database_exchange', 'direct', false, false);
+
 		// Declaring queue that frontend will be listening for
-		$receiverChannel ->queue_declare('database_queue', false, true, false, false);
+		$receiverChannel ->queue_declare('database_queue', false, false, true, false);
+
+		// Binding Key
+		$binding_key_database = 'frontend'
+
+		// Binding corresponding queue and exchange
+		$receiverChannel->queue_bind('database_queue', 'database_exchange', $binding_key_database);
 
 		// Establishing callback variable for processing messages from database
 		$receiverCallback = function ($msgContent) {

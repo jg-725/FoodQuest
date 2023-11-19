@@ -49,17 +49,25 @@ $channelSend->close();
 $connectionSend->close();
 
 
-/*		SECTION TO RECEIVE MESSAGES FROM BACKEND and DATABASE		*/
+/*		2 SECTIONS TO RECEIVE MESSAGES FROM BACKEND and DATABASE		*/
 
 
-//      --- THIS PART WILL LISTEN FOR MESSAGES FROM BACKEND ---
+//      --- SECTION 1: WILL LISTEN FOR MESSAGES FROM BACKEND ---
 
 // Connecting to RabbitMQ
-$connectionReceiveBackend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+$connectionBackend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+$channelBackend = $connectionBackend->channel();
 
-$channelReceiveBackend = $connectionReceiveBackend->channel();
+$channelBackend->exchange_declare('backend_exchange', 'direct', false, false, false);
+
 //	Making NON durable queue for testing
-$channelReceiveBackend->queue_declare('frontend_mailbox', false, false, false, false);
+$channelBackend->queue_declare('frontend_mailbox', false, false, false, false);
+
+// Binding Key
+$binding_key_backend = 'frontend';
+
+// Binding corresponding queue and exchange
+$channelBackend->queue_bind('frontend_mailbox', 'backend_exchange', $binding_key_backend);
 
 // Establishing callback variable for processing messages from database
 $receiveCallback1 = function ($msgContent) {
@@ -87,18 +95,20 @@ $receiveCallback1 = function ($msgContent) {
 	}
 }
 
+//$channelBackend->basic_qos(null, 1, false);
+
 // Triggering the process to consume msgs from BACKEND IF USER FORMAT IS INVALID
-$channelReceiveBackend->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback1);
+$channelBackend->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback1);
 
 // while loop to keep checking for incoming messages from database
-while ($channelReceiveBackend->is_open()) {
-	$channelReceiveBackend->wait();
+while ($channelBackend->is_open()) {
+	$channelBackend->wait();
 	break;
 }
 
 // Terminating channel and connection for receivin msgs
-$channelReceiveBackend->close();
-$connectionReceiveBackend->close();
+$channelBackend->close();
+$connectionBackend->close();
 
 
 
