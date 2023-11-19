@@ -1,40 +1,69 @@
 <?php
+
 require_once __DIR__ . '/vendor/autoload.php'; // Include RabbitMQ library
-use PhpAmqpLib\Connection\AMPStreamConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+
 // Create a connection to RabbitMQ
-$connection = new AMQPStreamConnection('172.26.144.241', 5672, 'test', 'test');
-$channel = $connection->channel();
-
-// Define RabbitMQ server connection parameters
-//$host = '172.26.144.241'; // RabbitMQ server host
-//$port = 5672;        // RabbitMQ server port
-//$user = 'test'; // RabbitMQ username
-//$pass = 'test'; // RabbitMQ password
-//$vhost = 'testHost';        // Virtual host (default is '/')
-
-// Connect to RabbitMQ
-$connection = new AMQPStreamConnection($host, $port, $user, $pass );
+$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 $channel = $connection->channel();
 
 // Declare the queue to send login requests
-$queueName = 'login_requests';
-$channel->queue_declare($queueName, false, false, false, false,);
+//$queueName = 'login_requests';
+
+$channel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+
+$routing_key = 'backend';
+
+//$channel->queue_declare($queueName, false, false, false, false,);
 
 // Get username and password from the form
-$username = $_POST["username"];
-$password = $_POST["password"];
+$username = 'John';
+$password = 1234;
 
-// Send login request to the queue
-$message = json_encode(["username" => $username, "password" => $password]);
-$msg = new AMQPMessage($message);
-$channel->basic_publish($msg, '', $queueName);
+$loginArray = array();
 
-<br />define( 'WP_DEBUG', true );<br />
-define( 'WP_DEBUG_LOG', true );<br />
-define( 'WP_DEBUG_DISPLAY', false );<br />Logs are usually found in the /wp-content directory.<br />
+if (empty($loginArray)) {
+	$loginArray['username'] = $username;
+	$loginArray['password'] = $password;
+}
+
+// ENCODING LOGIN INTO JSON
+$encodedLogin = json_encode($loginArray);
+
+//	TURNING MESSAGE RABBTMQ READY
+$msg = new AMQPMessage($encodedLogin);
+
+$channel->basic_publish($msg, 'frontend_exchange', $routing_key);
+
+echo ' [*] SENT RANDOM LOGIN TO BACKEND FOR PROCESSING', "\n";
+print_r($loginArray);
+echo "\n\n";
 
 $channel->close();
 $connection->close();
 
-header("Location: response.php");
+/*		RECEIVING REGEX MESSAGE FROM BACKEND		*/
+
+$connectionRegex = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+$channelRegex = $connectionRegex->channel();
+
+$channelRegex->queue_declare('regexQueue', false, false, false, false);
+
+$callbackRegex = function ($regexMsg) {
+	$data = json_decode($regexMsg->getBody(),true);
+	echo "[+] RECEIVED REGEX RESPONSE FROM BACKEND\n";
+	print_r($data);
+};
+
+$channelRegex->basic_consume('regexQueue', '', false, true, false, false, $callbackRegex);
+
+while ($channelRegex->is_open()) {
+	$channelRegex->wait();
+	break;
+}
+
+$channelRegex->close();
+$connectionRegex->close();
+
+?>
