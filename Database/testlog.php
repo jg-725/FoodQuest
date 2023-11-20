@@ -18,7 +18,7 @@ if (!$conn) {
 }
 
 // Check if the user exists in the database
-$sql_check = "SELECT * FROM users WHERE BINARY username = '$username'";
+$sql_check = "SELECT * FROM users WHERE  username = '$username'";
 $result = mysqli_query($conn, $sql_check);
 
 if (mysqli_num_rows($result) > 0) {
