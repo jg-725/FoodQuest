@@ -4,6 +4,8 @@
 
 
 
+<?php
+
 // Connect to the database
 $servername = "localhost";
 $username_db = "test";
@@ -72,3 +74,4 @@ mysqli_stmt_close($stmt_insert_additional);
 
 // Close the database connection
 mysqli_close($conn);
+
