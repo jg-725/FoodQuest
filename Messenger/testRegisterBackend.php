@@ -32,8 +32,8 @@ echo '[*] WAITING FOR FRONTEND TO SEND MESSAGES. To exit press CTRL+C', "\n\n";
 //	CALLBACK RESPONSIBLE OF PROCESSESSING VALID AND INVALID USER REQUESTS
 $callback = function ($userData) use ($channel) {
 
-	echo '[+] RECEIVED REGISTRATION INPUT FROM FRONTEND', "\n", $msg->getBody(), "\n\n";
-	$registerData = json_decode($msg->getBody(), true);
+	echo '[+] RECEIVED REGISTRATION INPUT FROM FRONTEND',"\n\n";
+	$registerData = json_decode($userData->getBody(), true);
 
 	$regexRegister = array();
 
@@ -62,9 +62,9 @@ $callback = function ($userData) use ($channel) {
 	}
 
 	//	PASSWORD REGEX
-	strong_password = "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/";
+	$strong_password = "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/";
 
-	if (preg_match(strong_password, $stringPass)) {
+	if (preg_match($strong_password, $stringPass)) {
 		//$regexPass = "Password meets criteria";
 		$regexPass = TRUE;
 	}
@@ -119,7 +119,7 @@ $callback = function ($userData) use ($channel) {
 		}
 
 		//	ENCODING ARRAY INTO JSON FOR DELIVERY
-		$validRegexArray = json_encode($regexMsg);
+		$validRegexArray = json_encode($regexRegister);
 
 		//	CONNECTION TO MAIN RABBIT NODE
 		$validRegexConnection = new AMQPStreamConnection('192.168.194.2',
@@ -155,7 +155,7 @@ $callback = function ($userData) use ($channel) {
 
 		//	COMMAND RESPONSE TO SIGNAL MSG WAS PROCESSES AND SENT
 		echo '[@] REGEX PROTOCOL ACTIVATED [@]', "\nMESSAGE TO DATABASE\n";
-		print_r($regexMsg);
+		print_r($regexRegister);
 
 		$validRegexChannel->close();
         	$validRegexConnection->close();
