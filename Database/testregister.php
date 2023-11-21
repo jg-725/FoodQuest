@@ -50,9 +50,9 @@ $callbackDB = function ($msg) use ($channelDB) {
 
 // Connect to the database
 $servername = "localhost";
-$username_db = "test";
-$password_db = "test";
-$dbname = "test";
+$username_db = "hman009";
+$password_db = "it4901";
+$dbname = "FoodQuest";
 
 $conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
 
