@@ -10,7 +10,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 /*              SECTION TO SEND LOGIN TO BACKEND        */
 
 // Establishing a connection to MAIN RabbitMQ server
-$connectionRegister = new AMQPStreamConnection('192.168.194.2', 5672, 'galijeff', 'Rabbit123');
+$connectionRegister = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 $channelRegister = $connectionRegister->channel();  //Channel connection to send message
 
 // Declaring an EXCHANGE that ROUTES messages from FRONTEND TO BACKEND
@@ -21,7 +21,7 @@ $registerKey = 'backend';
 
 // Login Data
 $username = "John101";
-$password = "Pass123";
+$password = "Password123";
 $first = 'John';
 $last = 'Lennon';
 $email = 'theBeatles@email.com';
@@ -49,14 +49,14 @@ $msg = new AMQPMessage(
 );
 
 // Publishing data to RabbitMQ exchange for processing
-$channelSend->basic_publish($msg, 'frontend_exchange', $routing_key);
+$channelRegister->basic_publish($msg, 'frontend_exchange', $routing_key);
 
 echo ' [x] Frontend Task: SENT REGISTER DATA TO BACKEND FOR REGEX', "\n";
 print_r($send);
 echo "\n\n";
 
-$channelSend->close();
-$connectionSend->close();
+$channelRegister->close();
+$connectionRegister->close();
 
 
 //      --- THIS PART WILL LISTEN FOR MESSAGES FROM BACKEND ---

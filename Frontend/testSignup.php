@@ -17,7 +17,7 @@ $routing_key = "backend";
 
 // Login Data
 $username = "John101";
-$password = "Pass123";
+$password = "Foodquest-123";
 $first = 'John';
 $last = 'Lennon';
 $email = 'theBeatles@email.com';
@@ -47,7 +47,7 @@ $msg = new AMQPMessage(
 // Publishing data to RabbitMQ exchange for processing
 $channelSend->basic_publish($msg, 'frontend_exchange', $routing_key);
 
-echo ' [x] Frontend Task: Sent Login to Backend', "\n";
+echo ' [x] Frontend Task: SENT USER REGISTRATION TO BACKEND FOR PROCESSING', "\n";
 print_r($send);
 echo "\n\n";
 
@@ -94,7 +94,7 @@ $receiveCallback1 = function ($msgContent) {
 };
 
 // Triggering the process to consume msgs from BACKEND IF USER FORMAT IS INVALID
-$channelReceiveBackend->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback1);
+$channelReceiveBackend->basic_consume('frontend_mailbox', '', false, true, false, false, $receiveCallback1);
 
 // while loop to keep checking for incoming messages from database
 while ($channelReceiveBackend->is_open()) {

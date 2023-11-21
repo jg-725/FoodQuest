@@ -33,22 +33,28 @@ echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 $callbackDB = function ($msg) use ($channelDB) {
 	echo '[+] RECEIVED VALID REGEX REGISTER INPUT FROM BACKEND', "\n", $msg->getBody(), "\n\n";
 
-	$validRegRegex = json_decode($msg->getBody(), true);
+	$validSignupRegex = json_decode($msg->getBody(), true);
 
 	//	GETTING VARIABLES SENT FROM BACKEND
-	$user  = $validRegRegex['username'];
-	$pass  = $validRegRegex['password'];
-	$first = $validRegRegex['firstName'];
-	$last  = $validRegex['lastName'];
-	$email = $validRegRegex['email'];
+	$user  = $validSignupRegex['username'];
+	$pass  = $validSignupRegex['password'];
+	$first = $validSignupRegex['first'];
+	$last  = $validSignupRegex['last'];
+	$email = $validSignupRegex['email'];
 
-
-
+	//      JSON to String sanitize
+        $stringUser = filter_var($user, FILTER_SANITIZE_STRING);
+        $stringPass = filter_var($pass, FILTER_SANITIZE_STRING);
+        $stringFirst = filter_var($first, FILTER_SANITIZE_STRING);
+        $stringLast = filter_var($last, FILTER_SANITIZE_STRING);
+        $stringEmail = filter_var($email, FILTER_SANITIZE_STRING);
 
 	/*	MYSQL CODE	*/
 
 
 // Connect to the database
+
+//$servername = "192.168.194.3";
 $servername = "localhost";
 $username_db = "hman009";
 $password_db = "it4901";
@@ -62,55 +68,66 @@ if (!$conn) {
 }
 
 // Check if the user already exists in the database
-$sql_check = "SELECT * FROM Users WHERE username = '$username' OR email = '$email'";
+$sql_check = "SELECT * FROM Users WHERE username = '$username'/* OR email = '$email'*/";
 $result = mysqli_query($conn, $sql_check);
 
 if (mysqli_num_rows($result) > 0) {
     // User already exists
     echo "User already exists in the database.\n";
-    $userExists = true;
+    $newUser = FALSE;
 } else {
     // User does not exist
     // Insert the user data into the database
-    $sql = "INSERT INTO Users (username, password, email, firstname, lastname) VALUES ('$username', '$password', '$email', '$firstname', '$lastname')";
+    $sql = "INSERT INTO Users (username, password, firstname, lastname, email) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail')";
 
     if (mysqli_query($conn, $sql)) {
-        echo "New record created successfully";
-        $userExists = false;
+        echo "New record created successfully\n";
+        $newUser = TRUE;
     } else {
         echo "Error: " . $sql . "<br>" . mysqli_error($conn);
     }
 }
 
+	/*
 	// Function to send a message
-	function send_msg($sender, $message)
-	{
-    	global $conn;
-    	if (!empty($sender) && !empty($message)) {
-        $sender = mysqli_real_escape_string($conn, $sender);
-        $message = mysqli_real_escape_string($conn, $message);
-        $query = "INSERT INTO chat VALUES(null, '$sender', '$message')";
-        $run = mysqli_query($conn, $query);
-        return $run ? true : false;
-    } else {
-        return false;
-    }
-}
+	function send_msg($sender, $message) {
+    		global $conn;
+    		if (!empty($sender) && !empty($message)) {
+        		$sender = mysqli_real_escape_string($conn, $sender);
+        		$message = mysqli_real_escape_string($conn, $message);
+        		$query = "INSERT INTO chat VALUES(null, '$sender', '$message')";
+        		$run = mysqli_query($conn, $query);
+        		return $run ? true : false;
+    		}
+		else {
+        		return false;
+    		}
+
+	}
+	*/
 	// Close the database connection
 	mysqli_close($conn);
-
-
-
 
 	/*	GETTING FRONTEND MESSAGE READY - RABBITMQ	*/
 
 	//	ARRAY TO STORE MESSAGE
 	$returnMsg = array();
-	if (empty($returnMsg)) {	// Check if array is empty
-        	//$send['type'] = ;
-        	$returnMsg['newUser'] = $userCondition;
-        	//$send['password'] = $password;
+
+	if ($newUser == TRUE) {
+		if (empty($returnMsg)) {        // Check if array is empty
+                	$returnMsg['newUser'] = $newUser;
+
+        	}
+
 	}
+	else {
+		if (empty($returnMsg)) {        // Check if array is empty
+                	$returnMsg['newUser'] = $newUser;
+                	//$returnMsg['newUser'] = $userCondition;
+                	//$send['password'] = $password;
+        	}
+	}
+
 
 	//	GETTING MYSQL MESSAGE READY FOR DELIVERY TO FRONTEND
 	$encodedMsg = json_encode($returnMsg);
@@ -157,7 +174,7 @@ if (mysqli_num_rows($result) > 0) {
 
 
 $channelDB->basic_qos(null, 1, false);
-$channelDB->basic_consume('database_mailbox', '', false, true, false, false, $callback);
+$channelDB->basic_consume('database_mailbox', '', false, true, false, false, $callbackDB);
 
 while(count($channelDB->callbacks)) {
        	$channelDB->wait();
