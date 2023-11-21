@@ -40,8 +40,8 @@ $callback = function ($regexMsg) use ($channel) {
 
 	//	VARIABLES TO CONNECTO TO MYSQL DATABASE SERVER
 	$servername = "localhost";
-	$username_db = "John";
-	$password_db = "Pass123";
+	$username_db = "hman009";
+	$password_db = "it4901";
 	$dbname = "FoodQuest";
 
 	$conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
