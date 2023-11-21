@@ -8,6 +8,12 @@ require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
+// Server request POST initialized to trigger login request flow - IF statement
+if ($_SERVER['REQUEST_METHOD' === 'POST']) {
+
+	$username = $_POST['username'];
+	$password = $_POST['password'];
+
 	/*      SENDING LOGIN TO BACKEND FOR PROCESSING       */
 
 	//	Connecting to Main RabbitMQ Node IP
@@ -20,11 +26,6 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 	//	ROUTING KEY: Relationship between exchange and queue
 	$backendKey = "backend";
-
-	// Login Data
-	$username = "John";
-	$password = "Pass123";
-
 
 	// 	Creating an array to store user login POST request
 	$send = array();
@@ -160,4 +161,5 @@ use PhpAmqpLib\Message\AMQPMessage;
 	// Terminating channel and connection for receivin msgs
 	$receiverChannel->close();
 	$receiverConnection->close();
+}
 ?>

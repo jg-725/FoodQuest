@@ -70,13 +70,6 @@ $callback1 = function ($msg) {
 
 $channel->basic_qos(null, 1, false);  //changed third var: false
 
-$channel->basic_consume('backend_queue', '', false, true, false, false, $callback1);
-
-$channel->basic_consume('database_queue', '', false, true, false, false, $callback1);
-
-//$channel->basic_consume('frontend_queue', '', false, true, false, false, $callback3);
-
-
 // Sending the messages to the corresponding server
 //$channel->basic_publish($msg, '');
 

@@ -1,6 +1,6 @@
 <?php
 
-/*	TESTING: RECEIVING REGISTER MESSAGE FROM FRONTEND	*/
+/*	TESTING: RECEIVING LOGIN MESSAGES FROM FRONTEND	*/
 
 //	NECESSARY AMQP LIBRARIES FOR PHP
 require_once __DIR__ .'/vendor/autoload.php';
@@ -31,24 +31,18 @@ echo '[*] WAITING FOR FRONTEND TO SEND MESSAGES. To exit press CTRL+C', "\n\n";
 
 //	CALLBACK RESPONSIBLE OF PROCESSESSING VALID AND INVALID USER REQUESTS
 $callback = function ($userData) use ($channel) {
+	$userData = json_decode($msg->getBody(), true);
 
-	echo '[+] RECEIVED REGISTRATION INPUT FROM FRONTEND', "\n", $msg->getBody(), "\n\n";
-	$registerData = json_decode($msg->getBody(), true);
+	echo '[+] RECEIVED LOGIN FROM FRONTEND', "\n", $msg->getBody(), "\n\n";
 
-	$regexRegister = array();
+	$regexMsg = array();
 
-	$user = $registerData['username'];
-	$pass = $registerData['password'];
-	$first = $registerData[''];
-	$last = $registerData[''];
-	$email = $registerData[''];
+	$user = $data['username'];
+	$pass = $data['password'];
 
 	//	JSON to String sanitize
 	$stringUser = filter_var($user, FILTER_SANITIZE_STRING);
     	$stringPass = filter_var($pass, FILTER_SANITIZE_STRING);
-	$stringFirst = filter_var($first, FILTER_SANITIZE_STRING);
-        $stringLast = filter_var($last, FILTER_SANITIZE_STRING);
-	$stringEmail = filter_var($email, FILTER_SANITIZE_STRING);
 
 	//	TODO: IMPLEMENT REGEX FOR LOGIN INPUT BEFORE SENDING TO DATABASE
 
@@ -62,9 +56,7 @@ $callback = function ($userData) use ($channel) {
 	}
 
 	//	PASSWORD REGEX
-	strong_password = "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/";
-
-	if (preg_match(strong_password, $stringPass)) {
+	if (preg_match('/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/', $stringPass)) {
 		//$regexPass = "Password meets criteria";
 		$regexPass = TRUE;
 	}
@@ -73,49 +65,16 @@ $callback = function ($userData) use ($channel) {
 		//$regexPass = "Error: Password DOES NOT meet criteria";
 	}
 
-	//      FIRST NAME REGEX
-        if (preg_match('/^[a-zA-Z]+$/', $stringFirst)) {
-                $regexFirst = TRUE;
-        }
-        else {
-                $regexFirst = FALSE;
-                //$regexUser = "Invalid Username";
-        }
-
-	//      LAST NAME REGEX
-        if (preg_match('/^[a-zA-Z]+$/', $stringLast)) {
-                $regexLast = TRUE;
-        }
-        else {
-                $regexLast = FALSE;
-        }
-
-	//      EMAIL REGEX
-
-	// testing = "/^[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/";
-	$email_validation = '/^\\S+@\\S+\\.\\S+$/';
-
-        if (preg_match($email_validation, $stringEmail)) {
-                $regexEmail = TRUE;
-        }
-        else {
-                $regexEmail = FALSE;
-        }
-
 	//	IF STATEMENT TO SEND VALID INPUT TO DATABASE
 
-	if ($regexUser == TRUE && $regexPass == TRUE && $regexFirst == TRUE && $regexLast == TRUE && $regexEmail == TRUE) {
+	if ($regexUser == TRUE && $regexPass == TRUE) {
 		// Command line message
 		echo "[+] LOGIN INPUT MEETS SITE REQUIREMENTS";
 
-		$regexRegister = array();
 		//	CREATING ARRAY OF VALID REGEX LOGIN
-		if (empty($regexRegister)) {
-			$regexRegister['username'] = $stringUser;
-			$regexRegister['password'] = $stringPass;
-			$regexRegister['first'] = $stringFirst;
-			$regexRegister['last'] = $stringLast;
-			$regexRegister['email'] = $stringEmail;
+		if (empty($regexMsg)) {
+			$regexMsg['username'] = $stringUser;
+			$regexMsg['password'] = $stringPass;
 		}
 
 		//	ENCODING ARRAY INTO JSON FOR DELIVERY

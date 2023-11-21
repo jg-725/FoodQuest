@@ -39,9 +39,9 @@ $callback = function ($userData) use ($channel) {
 
 	$user = $registerData['username'];
 	$pass = $registerData['password'];
-	$first = $registerData[''];
-	$last = $registerData[''];
-	$email = $registerData[''];
+	$first = $registerData['firstName'];
+	$last = $registerData['lastName'];
+	$email = $registerData['email'];
 
 	//	JSON to String sanitize
 	$stringUser = filter_var($user, FILTER_SANITIZE_STRING);

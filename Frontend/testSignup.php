@@ -20,7 +20,7 @@ $username = "John101";
 $password = "Pass123";
 $first = 'John';
 $last = 'Lennon';
-$email = 'theBeatles@email.com'
+$email = 'theBeatles@email.com';
 
 // Creating array to store message type and login data
 $send = array();
@@ -91,7 +91,7 @@ $receiveCallback1 = function ($msgContent) {
 		//die(header("location:home.php"));
 		echo "Congrats: Username and Password Are Valid\n";
 	}
-}
+};
 
 // Triggering the process to consume msgs from BACKEND IF USER FORMAT IS INVALID
 $channelReceiveBackend->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback1);
@@ -130,7 +130,7 @@ $receiverCallback2 = function ($msgContent) {
 
         // Commands to be executed if username/password does not match
         if ($userExists == false) {
-                echo "Entered Username already exists\n";
+                echo "[x] DATABASE ERROR: USER ALREADY EXISTS\n";
 		echo "TRY AGAIN\n\n";
                 //echo "<script>alert('Username or password does not exist in database');</script>";
                 //echo "<script>location.href='login.php';</script>";
@@ -139,9 +139,9 @@ $receiverCallback2 = function ($msgContent) {
         // Commands to be executed if user exists
         if ($userExists == true) {
                 //die(header("location:home.php"));
-		echo "[x] Welcome user";
+		echo "[+] WELCOME ";
         }
-}
+};
 
 // Triggering the process to consume msgs from DATABASE IF USER EXISTS
 $channelReceiveDatabase->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback2);

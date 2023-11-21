@@ -1,24 +1,78 @@
 <?php
 
-// Test file for the registation page
-// PHP code for sending user data to backend and receiving confirmation from database
+//	TEST FILE FOR REGISTRATION PAGE
 
-// Calling all the neccesary AMQP Libraries
-
+//	AMQP Libraries
 require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
+
+/*              SECTION TO SEND LOGIN TO BACKEND        */
 
 // Establishing a connection to MAIN RabbitMQ server
-$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'galijeff', 'Rabbit123');
-$channel = $connection->channel();  //Channel connection to send message
-
+$connectionRegister = new AMQPStreamConnection('192.168.194.2', 5672, 'galijeff', 'Rabbit123');
+$channelRegister = $connectionRegister->channel();  //Channel connection to send message
 
 // Declaring an EXCHANGE that ROUTES messages from FRONTEND TO BACKEND
-$channel->exchange_declare('backend_exchange', 'direct', false, false, false);
+$channelRegister->exchange_declare('backend_exchange', 'direct', false, false, false);
 
 // Binding key to bind exchange with queue
-$binding_key_backend = 'backend';
+$registerKey = 'backend';
 
+// Login Data
+$username = "John101";
+$password = "Pass123";
+$first = 'John';
+$last = 'Lennon';
+$email = 'theBeatles@email.com';
+
+// Creating array to store message type and login data
+$send = array();
+
+if (empty($send)) {
+
+	$send['username'] 	= $username;
+	$send['password'] 	= $password;
+	$send['firstName'] 	= $first;
+	$send['lastName']	= $last;
+	$send['email']		= $email;
+}
+
+// Turining data into a string type
+$login_data = json_encode($send);
+
+// Creating AMQPMessage For Delivery
+$msg = new AMQPMessage(
+	$login_data,
+	array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
+	//array('delivery_mode' => 2)
+);
+
+// Publishing data to RabbitMQ exchange for processing
+$channelSend->basic_publish($msg, 'frontend_exchange', $routing_key);
+
+echo ' [x] Frontend Task: SENT REGISTER DATA TO BACKEND FOR REGEX', "\n";
+print_r($send);
+echo "\n\n";
+
+$channelSend->close();
+$connectionSend->close();
+
+
+//      --- THIS PART WILL LISTEN FOR MESSAGES FROM BACKEND ---
+
+// Connecting to RabbitMQ
+$connectionReceiveBackend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+$channelReceiveBackend = $connectionReceiveBackend->channel();
+
+//	Making NON durable queue for testing
+$channelReceiveBackend->queue_declare('frontend_mailbox', false, false, false, false);
+
+
+
+?>
+/*
 $callback = function ($msg) {
 
 	echo " [x] RabbitMQ Received Message From Frontend\n";
@@ -27,5 +81,5 @@ $callback = function ($msg) {
 	//$next_job = json_decode($msg->body, $assocForm=true);
 	//$msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
 };
+*/
 
-?>
