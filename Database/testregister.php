@@ -15,7 +15,7 @@ if (!$conn) {
 }
 
 // Check if the user already exists in the database
-$sql_check = "SELECT * FROM users WHERE username = '$username' OR email = '$email'";
+$sql_check = "SELECT * FROM Users WHERE username = '$username' OR email = '$email'";
 $result = mysqli_query($conn, $sql_check);
 
 if (mysqli_num_rows($result) > 0) {
@@ -25,7 +25,7 @@ if (mysqli_num_rows($result) > 0) {
 } else {
     // User does not exist
     // Insert the user data into the database
-    $sql = "INSERT INTO users (username, password, email, firstname, lastname) VALUES ('$username', '$password', '$email', '$firstname', '$lastname')";
+    $sql = "INSERT INTO Users (username, password, email, firstname, lastname) VALUES ('$username', '$password', '$email', '$firstname', '$lastname')";
 
     if (mysqli_query($conn, $sql)) {
         echo "New record created successfully";
