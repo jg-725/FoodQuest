@@ -69,7 +69,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
       	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		$username = $_POST['username'];
-        	$password = $_POST['password'];
+        	$password = $_POST['new_password'];
 
   		/*      Sending/Publishing Section       */
 
@@ -110,7 +110,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 		$senderChannel->basic_publish($msg, 'frontend_exchange', $loginRoutingKey);
 
 		// Message that shows login workflow was triggered
-		echo ' [x] Frontend Task: Sent Login Data To Backend Exchange', "\n";
+		echo ' [x] FRONTEND TASK: SENT LOGIN TO BACKEND FOR REGEX PROCESSING', "\n";
 		print_r($loginArray);
 		echo "\n\n";
 
@@ -147,8 +147,6 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 		// Binding corresponding queue and exchange
 		$regexChannel->queue_bind('frontend_mailbox', 'backend_exchange', $regexKey);
 
-
-
 		// Establishing callback variable for processing messages from database
 		$regexCallback = function ($msgContent) {
 
@@ -165,15 +163,15 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 
 			// Commands to be executed if username/password does not match
 			if ($validUser == false || $validPassword == false) {
-				echo "Username or password does not meet criteria\n";
-				//echo "<script>alert('Username or password does not exist in database');</script>";
-				//echo "<script>location.href='login.php';</script>";
+				//echo "Username or password does not meet criteria\n";
+				echo "<script>alert('Username or password does not exist in database');</script>";
+				echo "<script>location.href='login.php';</script>";
 			}
 
 			// Commands to be executed if data is valid
 			if ($validUser == true && $validPassword == true) {
-				//die(header("location:home.php"));
-				echo "Congrats: Username and Password Are Valid\n";
+				die(header("location:home.php"));
+				//echo "Congrats: Username and Password Are Valid\n";
 			}
 		};
 
@@ -214,9 +212,11 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 		$receiverCallback = function ($msgContent) {
 
 			// Decoding received msg from database into usuable code for processing
-			$decodedLogin = json_decode($msgContent->getBody(), true);
+			$decodedDBLogin = json_decode($msgContent->getBody(), true);
 
-			$userExists = $decodedLogin['userExists'];
+			$userExists = $decodedDBLogin['userExists'];
+			$userID = $decodedDBLogin['userID'];
+			$dbUser = $decodedDBLogin['username'];
 
 			/* 2 IF statements: Checking if user exists */
 

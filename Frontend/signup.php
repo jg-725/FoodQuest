@@ -44,27 +44,26 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
     	<img src="21.png"/>
 </div>
 
-<form role="form" name="signup" action="testRabbitMQClient2.php" method="post" onSubmit="return validateForm();" >
+<form role="form" name="signup" method="post">
 
 	<input type="text" placeholder="Username" name="username_" id="username" class="username" required="required" aria-describedby="usernameHelp" />
 
         <input type="password" placeholder="Password" id="new_password" name="new_password_" class="password" required="required" />
 
         <input type="password" placeholder="Confirm Password" class="password" id="confirm_password" name="confirm_password_" autocomplete="new-password" required="required" />
-        <input type="test" placeholder="First Name" class="Fname" id="Fname" name="first_name_" autocomplete="first-name" required="required">
 
-    	<input type="test" placeholder="Last Name" class="Lname" id="Lname" name="last_name_" autocomplete="last-name" required="required" />
+        <input type="text" placeholder="First Name" class="Fname" id="Fname" name="first_name_" autocomplete="first-name" required="required">
+
+    	<input type="text" placeholder="Last Name" class="Lname" id="Lname" name="last_name_" autocomplete="last-name" required="required" />
 
         <input type="email" placeholder="Email" class="Email" id="Email" name="email_" autocomplete="email" required="required" />
 
-        <input type="test" placeholder="Address" class="Address" id="Address" name="address_" autocomplete="address" required="required" />
+        <input type="text" placeholder="Address" class="Address" id="Address" name="address_" autocomplete="address" required="required" />
 
-	<input type="test" placeholder="Phone Number" class="Pnumber" id="Pnumber" name="pnumber_" autocomplete="phone-number" required="required" onkeypress="return isNumberKey(event)" />
-<br/>
-<br/>
-
-
-    <button type="submit" class="login" name="submit">Sign Up</button>
+	<input type="text" placeholder="Phone Number" class="Pnumber" id="Pnumber" name="pnumber_" autocomplete="phone-number" required="required" onkeypress="return isNumberKey(event)" />
+	<br/>
+	<br/>
+	<button type="submit" class="signup" name="submit">Sign Up</button>
 </form>
 
 </div>
@@ -91,11 +90,13 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 
 		//	GETTING POST VARIABLES FROM SIGNUP FORM
 		$username = $_POST['username'];
-        	$password = $_POST['password'];
-        	$confirm = $_POST['confirm'];
-        	$firstname = $_POST['firstname'];
-        	$lastname = $_POST['lastname'];
-		$email = $_POST['email'];
+        	$password = $_POST['new_password'];
+        	$confirm = $_POST['confirm_password'];
+        	$firstname = $_POST['Fname'];
+        	$lastname = $_POST['Lname'];
+		$email = $_POST['Email'];
+		$address = $_POST['Address'];
+		$phone = $_POST['Pnumber'];
 
 
 		// Connecting to Main RabbitMQ Node IP
@@ -117,6 +118,9 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 			$send['confirm'] = $confirm;
                         $send['first'] = $firstname;
 			$send['last'] = $lastname;
+			$send['email'] = $email;
+			$send['address'] = $address;
+			$send['phone'] = $phone;
 		}
 
 		// Turning array into JSON for compatability
@@ -185,12 +189,6 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 		// Triggering the process to consume msgs from BACKEND IF USER FORMAT IS INVALID
 		$channelReceiveBackend->basic_consume('frontend_mailbox', '', false, true, false, false, $receiveCallback1);
 
-		/*
-		// Triggering the process to consume msgs from database
-		$receiverChannel->basic_consume('database_queue', '', false, true, false, false, $receiverCallback);
-
-		*/
-
 		// while loop to keep checking for incoming messages from BACKEND
 		while ($channelReceiveBackend->is_open()) {
 			$channelReceiveBackend->wait();
@@ -200,7 +198,6 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 		// Terminating channel and connection for receivin msgs
 		$channelReceiveBackend->close();
 		$connectionReceiveBackend->close();
-
 
 
 		//      --- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---
@@ -219,12 +216,12 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
         		// Decoding received msg from database into usuable code for processing
         		$decodedDatabase = json_decode($msgContent->getBody(), true);
 
-        		$userExists = $decodedDatabase['userExists'];
+        		$newUser = $decodedDatabase['newUser'];
 
         		/* 2 IF statements: Checking if user exists */
 
        			// Commands to be executed if username/password does not match
-        		if ($userExists == false) {
+        		if ($newUser == FALSE) {
                 		//echo "[x] DATABASE ERROR: USER ALREADY EXISTS\n";
 				//echo "TRY AGAIN\n\n";
                 		echo "<script>alert('USER ALREADY EXISTS: ENTER USERNAME AND PASSWORD');</script>";
@@ -232,7 +229,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
         		}
 
         		// Commands to be executed if user exists
-        		if ($userExists == true) {
+        		if ($newUser == TRUE) {
                 		die(header("location:home.php"));
 				//echo "[+] WELCOME ";
         		}
@@ -257,6 +254,8 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 <script type="text/javascript" src="public/javascript/jquery-3.2.1.min.js"></script>
 <script type="text/javascript" src="public/javascript/script.js"></script>
 <script type="text/javascript" src="public/javascript/send.js"></script>
+
+/*
 <script>
   function validateForm(){
       var fields = ["username_","new_password_","confirm_password_"];
@@ -276,5 +275,6 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
       return true;
   }
 </script>
+*/
 </body>
 </html>
