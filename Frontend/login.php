@@ -1,8 +1,8 @@
 <?php
-session_start();
+session_start(); // Start the session
 
 // Checks if the user is logged in. If they are, redirect them to the home page as login.php should not be accessable to logged in users.
-if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
+if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
   header("Location: home.php");
   exit();
 }
@@ -58,20 +58,17 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
  
   </form>
 <?php
-	session_start(); // Start the session
+	
 
 	// Required PHP and AMQP Libraries to interact with RabbitMQ
-	require_once '/home/FoodQuest/Frontend/vendor/autoload.php';
+require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 	use PhpAmqpLib\Connection\AMQPStreamConnection;
       	use PhpAmqpLib\Message\AMQPMessage;
 
 	// Server request POST initialized to trigger login request flow - IF statement
       	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-		$username = $_POST['username'];
-        	$password = $_POST['new_password'];
-
-  		/*      Sending/Publishing Section       */
+      	
+      	/*      Sending/Publishing Section       */
 
 		// Connecting to Main RabbitMQ Node IP
 		$senderConnection = new AMQPStreamConnection(
@@ -80,14 +77,19 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 				'foodquest',
 				'rabbit123'
 		);
+
+		$username = $_POST['username'];
+        	$password = $_POST['password'];
+
+  		
 		$senderChannel = $senderConnection->channel();	//Establishing Channel Connection for communication
 
 		// Declaring exchange for frontend to send/publish messages
-		$senderChannel->exchange_declare('backend_exchange', 'direct', false, false, false)
+	$senderChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
  		// Routing key address so RabbitMQ knows where to send the message
 		$loginRoutingKey = "backend";
-		
+
 		// Creating an array to store user login POST request
 		$loginArray = array();
 		if (empty($loginArray)) {	// Check if array is empty
@@ -165,7 +167,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 			if ($validUser == false || $validPassword == false) {
 				//echo "Username or password does not meet criteria\n";
 				echo "<script>alert('Username or password does not exist in database');</script>";
-				echo "<script>location.href='login.php';</script>";
+				echo "<script>location.href='signup.php';</script>";
 			}
 
 			// Commands to be executed if data is valid

@@ -1,8 +1,8 @@
 <?php
-session_start(); // Start the session
+session_start();
 
 // Checks if the user is logged in. If they are, redirect them to the home page as register.php should not be accessable to logged in users.
-if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
+if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
   header("Location: home.php");
   exit();
 }
@@ -46,7 +46,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 
 
 
-<form role="form" name="signup" action="testRabbitMQClient2.php" method="post" onSubmit="return validateForm();" >
+<form role="form" name="signup" method="POST" onSubmit="return validateForm();" >
 
 	<input type="text" placeholder="Username" name="username_" id="username" class="username" required="required" aria-describedby="usernameHelp" />
 
@@ -73,39 +73,33 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 
 </div>
 
-/*	RabbitMQ Code	*/
-<?php
-	
-	
 
+
+<?php
+		//RabbitMQ Code
 	// Required PHP and AMQP Libraries to interact with RabbitMQ
 	require_once __DIR__ .'/vendor/autoload.php';
 	use PhpAmqpLib\Connection\AMQPStreamConnection;
 	use PhpAmqpLib\Message\AMQPMessage;
 
-	// POST method initialized to trigger REGISTER request flow - IF statement
-	if ($_SERVER['REQUEST_METHOD' === 'POST']) {
-
-		/*              SECTION TO SEND USER REGISTRATION TO BACKEND        */
-
-
-		//	GETTING POST VARIABLES FROM SIGNUP FORM
-		$username = $_POST['username'];
-        	$password = $_POST['new_password'];
-        	$confirm = $_POST['confirm_password'];
-        	$firstname = $_POST['Fname'];
-        	$lastname = $_POST['Lname'];
-		$email = $_POST['Email'];
-		$address = $_POST['Address'];
-		$phone = $_POST['Pnumber'];
-
-
+	// POST method initialized to trigger REGISTER request flow - IF statementsender
+	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	
 		// Connecting to Main RabbitMQ Node IP
 		$connectionSend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-		$channelSend = $connectionSend->channel();	//Establishing Channel Connection for communication
+		$username = $_POST['username_'];
+        	$password = $_POST['new_password_'];
+        	$confirm = $_POST['confirm_password_'];
+        	$firstname = $_POST['first_name_'];
+        	$lastname = $_POST['last_name_'];
+		$email = $_POST['email_'];
+		$address = $_POST['address_'];
+		$phone = $_POST['pnumber_'];
+
+	$channelSend = $connectionSend->channel();	//Establishing Channel Connection for communication
 
 		// Declaring exchange for frontend to send/publish messages
-		$channelSend->exchange_declare('backend_exchange', 'direct', false, false, false);
+		$channelSend->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
 		// Routing key address so RabbitMQ knows where to send the message
 		$routing_key = "backend";
@@ -143,8 +137,8 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 		echo "\n\n";
 
 		// Terminating sending channel and connection
-		$senderChannel->close();
-		$senderConnection->close();
+		$channelSend->close();
+		$connectionSend->close();
 
 
 		/*		SECTION TO RECEIVE MESSAGES FROM BACKEND and DATABASE		*/
@@ -157,7 +151,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 
 		$channelReceiveBackend = $connectionReceiveBackend->channel();
 		//	Making NON durable queue for testing
-		$channelReceiveBackend->queue_declare('frontend_mailbox', false, false, false, false);
+		$channelReceiveBackend->queue_declare('frontend_mailbox', false, true, false, false);
 
 		// Establishing callback variable for processing messages from BACKEND
 		$receiverCallback1 = function ($msgContent) {
@@ -173,7 +167,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 
 			// Commands to be executed if username/password does not match
 			if ($validUser == false || $validPassword == false) {
-				echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA')</script>";
+echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA');</script>";
                                 //echo "[x] Error on signup: TRY AGAIN";
                                 echo "<script>location.href='signup.php';</script>";
 				//echo "<script>alert('Username or password does not exist in database');</script>";
@@ -182,8 +176,8 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 
 			// Commands to be executed if data is valid
 			if ($validUser == true && $validPassword == true) {
-				die(header("location:home.php"));
-				//echo "Congrats: Username and Password Are Valid\n";
+				die(header("location:successReg.php"));
+//echo "Congrats: Username and Password Are Valid\n";
 			}
 		};
 
@@ -209,7 +203,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 		$channelReceiveDatabase = $connectionReceiveDatabase->channel();
 
 		//      DECLARING NON durable queue for testing
-		$channelReceiveDatabase->queue_declare('frontend_mailbox', false, false, false, false);
+$channelReceiveDatabase->queue_declare('frontend_mailbox', false, true, false, false);
 
 		// Establishing callback variable for processing messages from database
 		$receiverCallback2 = function ($msgContent) {
