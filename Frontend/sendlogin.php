@@ -6,7 +6,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 /*              SECTION TO SEND LOGIN TO BACKEND        */
 
 // Connecting to RabbitMQ
-$connectionSend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$connectionSend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 $channelSend = $connectionSend->channel();
 
 // Declaring the exchange to send the message
