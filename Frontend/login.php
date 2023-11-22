@@ -74,39 +74,44 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
   		/*      Sending/Publishing Section       */
 
 		// Connecting to Main RabbitMQ Node IP
-		$senderConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+		$senderConnection = new AMQPStreamConnection(
+				'192.168.194.2',
+				5672,
+				'foodquest',
+				'rabbit123'
+		);
 		$senderChannel = $senderConnection->channel();	//Establishing Channel Connection for communication
 
 		// Declaring exchange for frontend to send/publish messages
 		$senderChannel->exchange_declare('backend_exchange', 'direct', false, false, false)
 
- 		// Binding key: Relationship between exchange and queue
-		$binding_key_backend = "backend";
+ 		// Routing key address so RabbitMQ knows where to send the message
+		$loginRoutingKey = "backend";
 
 		// Creating an array to store user login POST request
-		$send = array();
-		if (empty($send)) {	// Check if array is empty
+		$loginArray = array();
+		if (empty($loginArray)) {	// Check if array is empty
         		//$send['type'] = ;
-        		$send['username'] = $username;
-        		$send['password'] = $password;
+        		$loginArray['username'] = $username;
+        		$loginArray['password'] = $password;
 		}
 
 		// Turning array into JSON for compatability
 		//$login_data = implode($send);
-		$login_data = json_encode($send);
+		$encodedLogin = json_encode($loginArray);
 
 		// Creating AMQPMessage protocol once login data is ready for delivery
 	       $msg = new AMQPMessage(
-        		$login_data,
+        		$encodedLogin,
         		array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
 		);
 
 		// Publishing message to backend exchange using binding key indicating the receiver
-		$senderChannel->basic_publish($msg, 'backend_exchange', $binding_key_backend);
+		$senderChannel->basic_publish($msg, 'frontend_exchange', $loginRoutingKey);
 
 		// Message that shows login workflow was triggered
 		echo ' [x] Frontend Task: Sent Login Data To Backend Exchange', "\n";
-		print_r($send);
+		print_r($loginArray);
 		echo "\n\n";
 
 		// Terminating sending channel and connection
@@ -121,58 +126,129 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 
 		*/
 
-		//	Receiving/Consuming From Database
 
-		// Connecting to Main RabbitMQ Node IP
-        	$receiverConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-        	$receiverChannel = $receiverConnection->channel();  //Establishing Channel Connection for communication
+		/*		2 SECTIONS TO RECEIVE MESSAGES FROM BACKEND and DATABASE		*/
 
-		// Exchange to listen for
-		$receiverChannel->exchange_declare('database_exchange', 'direct', false, false);
 
-		// Declaring queue that frontend will be listening for
-		$receiverChannel ->queue_declare('database_queue', false, false, true, false);
+		//      --- SECTION 1: WILL LISTEN FOR MESSAGES FROM BACKEND ---
+
+		// Connecting to RabbitMQ
+		$regexConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+		$regexChannel = $regexConnection->channel();
+
+		$regexChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
+
+		//	Making NON durable queue for testing
+		$regexChannel->queue_declare('frontend_mailbox', false, false, false, false);
 
 		// Binding Key
-		$binding_key_database = 'frontend'
+		$regexKey = 'frontend';
 
 		// Binding corresponding queue and exchange
-		$receiverChannel->queue_bind('database_queue', 'database_exchange', $binding_key_database);
+		$regexChannel->queue_bind('frontend_mailbox', 'backend_exchange', $regexKey);
+
+
+
+		// Establishing callback variable for processing messages from database
+		$regexCallback = function ($msgContent) {
+
+			echo "[+] RECEIVED REGEX RESPONSE FROM BACKEND\n";
+
+			// Decoding return msg from backend into usuable code for processing
+			$decodedBackend = json_decode($msgContent->getBody(), true);
+
+			$validUser = $decodedBackend['validUser'];
+
+			$validPassword = $decodedBackend['validPassword'];
+
+			/* 2 IF statements: Checking if login data is valid */
+
+			// Commands to be executed if username/password does not match
+			if ($validUser == false || $validPassword == false) {
+				echo "Username or password does not meet criteria\n";
+				//echo "<script>alert('Username or password does not exist in database');</script>";
+				//echo "<script>location.href='login.php';</script>";
+			}
+
+			// Commands to be executed if data is valid
+			if ($validUser == true && $validPassword == true) {
+				//die(header("location:home.php"));
+				echo "Congrats: Username and Password Are Valid\n";
+			}
+		};
+
+		$regexChannel->basic_qos(null, 1, false);
+
+		// Triggering the process to consume msgs from BACKEND IF USER FORMAT IS INVALID
+		$regexChannel->basic_consume('frontend_mailbox', '', false, true, false, false, $regexCallback);
+
+		// while loop to keep checking for incoming messages from database
+		while ($regexChannel->is_open()) {
+			$regexChannel->wait();
+			break;
+		}
+
+		// Terminating channel and connection for receivin msgs
+		$regexChannel->close();
+		$regexConnection->close();
+
+
+		//      --- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---
+
+		//	Connecting to RabbitMQ
+		$connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+		$channelReceiveDatabase = $connectionReceiveDatabase->channel();
+
+		$channelReceiveDatabase->exchange_declare('database_exchange', 'direct', false, false, false);
+
+		//      DECLARING NON durable queue for testing third parameter
+		$channelReceiveDatabase->queue_declare('frontend_mailbox', false, false, false, false);
+
+		$loginKey = 'frontend';
+
+		// 	Binding corresponding queue and exchange
+		$channelReceiveDatabase->queue_bind('frontend_mailbox', 'database_exchange', $loginKey);
 
 		// Establishing callback variable for processing messages from database
 		$receiverCallback = function ($msgContent) {
 
 			// Decoding received msg from database into usuable code for processing
-			$decoded_login = json_decode($msgContent->getBody(), true);
+			$decodedLogin = json_decode($msgContent->getBody(), true);
+
+			$userExists = $decodedLogin['userExists'];
 
 			/* 2 IF statements: Checking if user exists */
 
 			// Commands to be executed if username/password does not match
-			if ($userExists == false) {
+			if ($userExists == FALSE) {
 				//echo "Username or password does not exist in database";
 				echo "<script>alert('Username or password does not exist in database');</script>";
 				echo "<script>location.href='login.php';</script>";
 			}
 
 			// Commands to be executed if user exists
-			if ($userExists == true) {
+			if ($userExists == TRUE) {
 				die(header("location:home.php"));
 			}
-		}
+		};
 
-		// Triggering the process to consume msgs from database
-		$receiverChannel->basic_consume('database_queue', '', false, true, false, false, $receiverCallback);
+		// Triggering the process to consume msgs from DATABASE IF USER EXISTS
+		$channelReceiveDatabase->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback);
 
 		// while loop to keep checking for incoming messages from database
-		while ($receiverChannel->is_open()) {
-			$receiverChannel->wait();
-			break;
+		while ($channelReceiveDatabase->is_open()) {
+        		$channelReceiveDatabase->wait();
+        		break;
 		}
 
 		// Terminating channel and connection for receivin msgs
-		$receiverChannel->close();
-		$receiverConnection->close();
+		$channelReceiveDatabase->close();
+		$connectionReceiveDatabase->close();
+
+
 	}
+	//	END OF PHP SERVER POST SESSION
 ?>
 </div>
 

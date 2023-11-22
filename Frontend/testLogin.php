@@ -23,7 +23,7 @@ $password = "Password123";
 
 // Creating array to store message type and login data
 $loginArray = array();
-if (empty($send)) {
+if (empty($loginArray)) {
 
 	$loginArray['username'] = $username;
 	$loginArray['password'] = $password;
@@ -44,7 +44,7 @@ $msg = new AMQPMessage(
 $channelSend->basic_publish($msg, 'frontend_exchange', $routing_key);
 
 echo ' [x] FRONTEND TASK: SENT TEST LOGIN TO BACKEND FOR PROCESSING', "\n";
-print_r($send);
+print_r($loginArray);
 echo "\n\n";
 
 $channelSend->close();
@@ -156,7 +156,7 @@ $receiverCallback = function ($msgContent) {
                 //die(header("location:home.php"));
 		echo "[x] Welcome user";
         }
-}
+};
 
 // Triggering the process to consume msgs from DATABASE IF USER EXISTS
 $channelReceiveDatabase->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback);

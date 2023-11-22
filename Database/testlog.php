@@ -141,7 +141,7 @@ $callback = function ($regexMsg) use ($channel) {
 
 	// 	Publishing message to exchange via routing key
         $existsChannel->basic_publish($existsMessage,
-					'database_exchange'
+					'database_exchange',
 					$exists_key
 	);
 

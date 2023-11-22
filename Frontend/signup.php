@@ -44,12 +44,6 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
     	<img src="21.png"/>
 </div>
 
-/*
-	FIX: I DONT THINK WE NEED testRabbitMQClient2.php file OR the return validateForm()
-
-     	We just need the POST METHOD like the login page
-*/
-
 <form role="form" name="signup" action="testRabbitMQClient2.php" method="post" onSubmit="return validateForm();" >
 
 	<input type="text" placeholder="Username" name="username_" id="username" class="username" required="required" aria-describedby="usernameHelp" />
@@ -92,6 +86,10 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 	// POST method initialized to trigger REGISTER request flow - IF statement
 	if ($_SERVER['REQUEST_METHOD' === 'POST']) {
 
+		/*              SECTION TO SEND USER REGISTRATION TO BACKEND        */
+
+
+		//	GETTING POST VARIABLES FROM SIGNUP FORM
 		$username = $_POST['username'];
         	$password = $_POST['password'];
         	$confirm = $_POST['confirm'];
@@ -99,17 +97,16 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
         	$lastname = $_POST['lastname'];
 		$email = $_POST['email'];
 
-		/*      Sending Messages Section       */
 
 		// Connecting to Main RabbitMQ Node IP
-		$senderConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-		$senderChannel = $senderConnection->channel();	//Establishing Channel Connection for communication
+		$connectionSend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+		$channelSend = $connectionSend->channel();	//Establishing Channel Connection for communication
 
 		// Declaring exchange for frontend to send/publish messages
-		$senderChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
+		$channelSend->exchange_declare('backend_exchange', 'direct', false, false, false);
 
-		// Binding key: Relationship between exchange and queue
-		$binding_key_backend = "backend";
+		// Routing key address so RabbitMQ knows where to send the message
+		$routing_key = "backend";
 
 		// Creating an array to store user login POST request
 		$send = array();
@@ -124,16 +121,19 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 
 		// Turning array into JSON for compatability
 		//$login_data = implode($send);
-		$login_data = json_encode($send);
+		$encodedSignup = json_encode($send);
 
 		// Creating AMQPMessage protocol once login data is ready for delivery
 		$msg = new AMQPMessage(
-        		$login_data,
+        		$encodedSignup,
         		array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
 		);
 
-		// Publishing message to backend exchange using binding key indicating the receiver
- 		echo ' [x] Frontend Task: Send register form to Backend Exchange', "\n";
+		// Publishing data to RabbitMQ exchange for processing
+		$channelSend->basic_publish($msg, 'frontend_exchange', $routing_key);
+
+		echo ' [x] Frontend Task: SENT USER REGISTRATION TO BACKEND FOR PROCESSING', "\n";
+ 		//echo ' [x] Frontend Task: Send register form to Backend Exchange', "\n";
 		print_r($send);
 		echo "\n\n";
 
@@ -142,64 +142,116 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 		$senderConnection->close();
 
 
-		/*	Receiving/Consuming Messages	*/
+		/*		SECTION TO RECEIVE MESSAGES FROM BACKEND and DATABASE		*/
 
-		// Connecting to Main RabbitMQ Node IP
-        	$receiverConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-        	$receiverChannel = $receiverConnection->channel();  //Establishing Channel Connection for communication
 
-		// Declaring queue that frontend will be listening for
-		$receiverChannel ->queue_declare('database_queue', false, true, false, false);
+		//      --- THIS PART WILL LISTEN FOR MESSAGES FROM BACKEND ---
 
-		// Establishing callback variable for processing messages from database
-		$receiverCallback = function ($msgContent) {
+		// Connecting to RabbitMQ
+		$connectionReceiveBackend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+		$channelReceiveBackend = $connectionReceiveBackend->channel();
+		//	Making NON durable queue for testing
+		$channelReceiveBackend->queue_declare('frontend_mailbox', false, false, false, false);
+
+		// Establishing callback variable for processing messages from BACKEND
+		$receiverCallback1 = function ($msgContent) {
 
 			// Decoding received msg from database into usuable code for processing
-			$decoded_signup = json_decode($msgContent->getBody(), true);
+			$decodedBackend = json_decode($msgContent->getBody(), true);
 
-			$validRegex = $decoded_signup['validRegex'];
-			$userExists = $decoded_signup['userExists'];
+			$validUser = $decodedBackend['validUser'];
 
+			$validPassword = $decodedBackend['validPassword'];
 
-			/* 2 IF statements: Checking if new user exists */
+			/*	2 IF statements: Checking if SIGNUP PASSES REGEX	*/
 
 			// Commands to be executed if username/password does not match
-			if ($validRegex == false) {
-				echo "<script>alert('Sign Up Input DOES NOT MEET CRITERIA')</script>";
-				echo "[x] Error on signup: TRY AGAIN";
-				echo "<script>location.href='signup.php';</script>";
+			if ($validUser == false || $validPassword == false) {
+				echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA')</script>";
+                                //echo "[x] Error on signup: TRY AGAIN";
+                                echo "<script>location.href='signup.php';</script>";
+				//echo "<script>alert('Username or password does not exist in database');</script>";
+				//echo "<script>location.href='login.php';</script>";
 			}
 
-			// Commands to be executed if REGEX is correct
-			if ($validRegex == true) {
-
-				if ($userExists == false) {
-					//die(header("location:home.php"))
-					echo "\n Congrats, Registeration Complete";
-					// Should redirect to dashboard page
-				}
-				else {
-					echo "<script>location.href='signup.php'</script>";
-					//echo "<script></script>";
-				}
+			// Commands to be executed if data is valid
+			if ($validUser == true && $validPassword == true) {
+				die(header("location:home.php"));
+				//echo "Congrats: Username and Password Are Valid\n";
 			}
-		}
+		};
 
+		// Triggering the process to consume msgs from BACKEND IF USER FORMAT IS INVALID
+		$channelReceiveBackend->basic_consume('frontend_mailbox', '', false, true, false, false, $receiveCallback1);
+
+		/*
 		// Triggering the process to consume msgs from database
 		$receiverChannel->basic_consume('database_queue', '', false, true, false, false, $receiverCallback);
 
-		// while loop to keep checking for incoming messages from database
-		while ($receiverChannel->is_open()) {
-			$receiverChannel->wait();
+		*/
+
+		// while loop to keep checking for incoming messages from BACKEND
+		while ($channelReceiveBackend->is_open()) {
+			$channelReceiveBackend->wait();
 			break;
 		}
 
 		// Terminating channel and connection for receivin msgs
-		$receiverChannel->close();
-		$receiverConnection->close();
+		$channelReceiveBackend->close();
+		$connectionReceiveBackend->close();
+
+
+
+		//      --- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---
+
+		// Connecting to RabbitMQ
+		$connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+		$channelReceiveDatabase = $connectionReceiveDatabase->channel();
+
+		//      DECLARING NON durable queue for testing
+		$channelReceiveDatabase->queue_declare('frontend_mailbox', false, false, false, false);
+
+		// Establishing callback variable for processing messages from database
+		$receiverCallback2 = function ($msgContent) {
+
+        		// Decoding received msg from database into usuable code for processing
+        		$decodedDatabase = json_decode($msgContent->getBody(), true);
+
+        		$userExists = $decodedDatabase['userExists'];
+
+        		/* 2 IF statements: Checking if user exists */
+
+       			// Commands to be executed if username/password does not match
+        		if ($userExists == false) {
+                		//echo "[x] DATABASE ERROR: USER ALREADY EXISTS\n";
+				//echo "TRY AGAIN\n\n";
+                		echo "<script>alert('USER ALREADY EXISTS: ENTER USERNAME AND PASSWORD');</script>";
+                		echo "<script>location.href='login.php';</script>";
+        		}
+
+        		// Commands to be executed if user exists
+        		if ($userExists == true) {
+                		die(header("location:home.php"));
+				//echo "[+] WELCOME ";
+        		}
+		};
+
+		// Triggering the process to consume msgs from DATABASE IF USER EXISTS
+		$channelReceiveDatabase->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback2);
+
+		// while loop to keep checking for incoming messages from database
+		while ($channelReceiveDatabase->is_open()) {
+        		$channelReceiveDatabase->wait();
+        		break;
+		}
+
+		// Terminating channel and connection for receivin msgs
+		$channelReceiveDatabase->close();
+		$connectionReceiveDatabase->close();
 	}
 ?>
-
 
 
 <script type="text/javascript" src="public/javascript/jquery-3.2.1.min.js"></script>
