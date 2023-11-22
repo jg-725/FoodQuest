@@ -54,8 +54,8 @@ $callbackDB = function ($msg) use ($channelDB) {
 
 // Connect to the database
 
-//$servername = "192.168.194.3";
-$servername = "localhost";
+$servername = "192.168.194.3";
+//$servername = "localhost";
 $username_db = "test";
 $password_db = "test";
 $dbname = "FoodQuest";
@@ -142,7 +142,7 @@ if (mysqli_num_rows($result) > 0) {
 
 	//	EXCHANGE THAT WILL ROUTE DATABASE MESSAGES
 	$existsChannel->exchange_declare('database_exchange',
-					false,
+					'direct',
 					false,
 					false,
 					false
