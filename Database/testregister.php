@@ -56,8 +56,8 @@ $callbackDB = function ($msg) use ($channelDB) {
 
 //$servername = "192.168.194.3";
 $servername = "localhost";
-$username_db = "hman009";
-$password_db = "it4901";
+$username_db = "test";
+$password_db = "test";
 $dbname = "FoodQuest";
 
 $conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
