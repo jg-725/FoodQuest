@@ -87,7 +87,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["OurIPs"])) {
 
  		// Routing key address so RabbitMQ knows where to send the message
 		$loginRoutingKey = "backend";
-
+		
 		// Creating an array to store user login POST request
 		$loginArray = array();
 		if (empty($loginArray)) {	// Check if array is empty
