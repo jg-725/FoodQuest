@@ -82,7 +82,7 @@ $result = mysqli_query($conn, $sql_check);
 	} else {
     		// User does not exist
     		// Insert the user data into the database
-    		$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonenumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhone')";
+    		$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhone')";
 
     		if (mysqli_query($conn, $sql)) {
         		echo "New record created successfully\n";
