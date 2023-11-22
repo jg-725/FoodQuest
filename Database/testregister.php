@@ -56,8 +56,8 @@ $callbackDB = function ($msg) use ($channelDB) {
 
 //$servername = "192.168.194.3";
 $servername = "localhost";
-$username_db = "hman009";
-$password_db = "it4901";
+$username_db = "test";
+$password_db = "test";
 $dbname = "FoodQuest";
 
 $conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
@@ -68,7 +68,7 @@ if (!$conn) {
 }
 
 // Check if the user already exists in the database
-$sql_check = "SELECT * FROM Users WHERE username = '$username'/* OR email = '$email'*/";
+$sql_check = "SELECT * FROM Users WHERE Username = '$username'/* OR email = '$email'*/";
 $result = mysqli_query($conn, $sql_check);
 
 if (mysqli_num_rows($result) > 0) {
@@ -78,7 +78,7 @@ if (mysqli_num_rows($result) > 0) {
 } else {
     // User does not exist
     // Insert the user data into the database
-    $sql = "INSERT INTO Users (username, password, firstname, lastname, email) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail')";
+    $sql = "INSERT INTO Users (Username, Password, Fname, Lname, Email) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail')";
 
     if (mysqli_query($conn, $sql)) {
         echo "New record created successfully\n";
