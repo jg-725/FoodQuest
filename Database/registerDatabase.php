@@ -154,8 +154,6 @@ $result = mysqli_query($conn, $sql_check);
 	$existsChannel->close();
         $existsConnection->close();
 };
-
-while (true) {
 	try {
 		$channelDB->basic_qos(null, 1, false);
 		$channelDB->basic_consume('database_mailbox', '', false, true, false, false, $callbackDB);
@@ -169,7 +167,7 @@ while (true) {
         	// Handle Error
         	echo "ErrorException CAUGHT AT: " . $e->getMessage();
     	}
-}
+
 
 //	Closing MAIN channel and connection
 $channelDB->close();

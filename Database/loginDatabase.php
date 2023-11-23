@@ -149,7 +149,6 @@ $callback = function ($regexMsg) use ($channel) {
         $existsConnection->close();
 };
 
-while (true) {
 	try {
 		$channel->basic_qos(null, 1, false);
 		$channel->basic_consume('database_mailbox', '', false, true, false, false, $callback);
@@ -164,7 +163,7 @@ while (true) {
 		//	ERROR HANDLING
       		echo "CAUGHT DATABASE ErrorException: " . $e->getMessage();
   	}
-}
+
 //	CLOSING MAIN CHANNEL AND CONNECTION
 $channel->close();
 $connection->close();
