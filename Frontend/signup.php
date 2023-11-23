@@ -141,6 +141,7 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 		$connectionSend->close();
 
 
+
 		/*		SECTION TO RECEIVE MESSAGES FROM BACKEND and DATABASE		*/
 
 
@@ -150,8 +151,10 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 		$connectionReceiveBackend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
 		$channelReceiveBackend = $connectionReceiveBackend->channel();
-		//	Making NON durable queue for testing
+
+		//	Making durable queue for production
 		$channelReceiveBackend->queue_declare('frontend_mailbox', false, true, false, false);
+
 
 		// Establishing callback variable for processing messages from BACKEND
 		$receiverCallback1 = function ($msgContent) {
@@ -166,8 +169,8 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 			/*	2 IF statements: Checking if SIGNUP PASSES REGEX	*/
 
 			// Commands to be executed if username/password does not match
-			if ($validUser == false || $validPassword == false) {
-echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA');</script>";
+			if ($validUser == FALSE || $validPassword == FALSE) {
+				echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA');</script>";
                                 //echo "[x] Error on signup: TRY AGAIN";
                                 echo "<script>location.href='signup.php';</script>";
 				//echo "<script>alert('Username or password does not exist in database');</script>";
@@ -175,9 +178,9 @@ echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA');</script>";
 			}
 
 			// Commands to be executed if data is valid
-			if ($validUser == true && $validPassword == true) {
+			if ($validUser == TRUE && $validPassword == TRUE) {
 				die(header("location:successReg.php"));
-//echo "Congrats: Username and Password Are Valid\n";
+				//echo "Congrats: Username and Password Are Valid\n";
 			}
 		};
 
@@ -202,8 +205,8 @@ echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA');</script>";
 
 		$channelReceiveDatabase = $connectionReceiveDatabase->channel();
 
-		//      DECLARING NON durable queue for testing
-$channelReceiveDatabase->queue_declare('frontend_mailbox', false, true, false, false);
+		//      DECLARING durable queue for testing
+		$channelReceiveDatabase->queue_declare('frontend_mailbox', false, true, false, false);
 
 		// Establishing callback variable for processing messages from database
 		$receiverCallback2 = function ($msgContent) {

@@ -17,7 +17,7 @@ $channel = $connection->channel();
 //	DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
 $channel->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
-//	USING NON DURABLE QUEUE FOR TESTING: Third parameter is false
+//	USING DURABLE QUEUE FOR WEBSITE: Third parameter is TRUE
 $channel->queue_declare('backend_mailbox', false, true, false, false);
 
 // Binding key

@@ -17,8 +17,8 @@ $channelDB = $connectionDB->channel();
 
 $channelDB->exchange_declare('backend_exchange', 'direct', false, false, false);
 
-//	Using NON DURABLE QUEUES: Third parameter is false
-$channelDB->queue_declare('database_mailbox', false, false, false, false);
+//	Using DURABLE QUEUES: Third parameter is true
+$channelDB->queue_declare('database_mailbox', false, true, false, false);
 
 // Binding key
 $bindingKeyDB = "database";
