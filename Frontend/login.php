@@ -85,7 +85,7 @@ require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 		$senderChannel = $senderConnection->channel();	//Establishing Channel Connection for communication
 
 		// Declaring exchange for frontend to send/publish messages
-	$senderChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+		$senderChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
  		// Routing key address so RabbitMQ knows where to send the message
 		$loginRoutingKey = "backend";
@@ -140,8 +140,8 @@ require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 
 		$regexChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
 
-		//	Making NON durable queue for testing
-		$regexChannel->queue_declare('frontend_mailbox', false, false, false, false);
+		//	Making durable queue for production
+		$regexChannel->queue_declare('frontend_mailbox', false, true, false, false);
 
 		// Binding Key
 		$regexKey = 'frontend';
@@ -202,8 +202,8 @@ require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 
 		$channelReceiveDatabase->exchange_declare('database_exchange', 'direct', false, false, false);
 
-		//      DECLARING NON durable queue for testing third parameter
-		$channelReceiveDatabase->queue_declare('frontend_mailbox', false, false, false, false);
+		//      DECLARING durable queue: third parameter TRUE
+		$channelReceiveDatabase->queue_declare('frontend_mailbox', false, true, false, false);
 
 		$loginKey = 'frontend';
 

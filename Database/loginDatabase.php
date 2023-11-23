@@ -15,7 +15,7 @@ $connection = new AMQPStreamConnection('192.168.194.2',
 					'rabbit123');
 $channel = $connection->channel();
 
-//	EXCHANGE THAT WILL MESSAGES WILL COME FROM
+//	EXCHANGE THAT MESSAGES WILL COME FROM
 $channel->exchange_declare('backend_exchange', 'direct', false, false, false);
 
 //	Using DURABLE QUEUES FOR DELIVERY: Third parameter is TRUE
