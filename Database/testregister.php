@@ -41,6 +41,8 @@ $callbackDB = function ($msg) use ($channelDB) {
 	$first = $validSignupRegex['first'];
 	$last  = $validSignupRegex['last'];
 	$email = $validSignupRegex['email'];
+        $address = $validSignupRegex['address'];
+        $phone = $validSignupRegex['phone'];
 
 	//      JSON to String sanitize
         $stringUser = filter_var($user, FILTER_SANITIZE_STRING);
@@ -48,6 +50,8 @@ $callbackDB = function ($msg) use ($channelDB) {
         $stringFirst = filter_var($first, FILTER_SANITIZE_STRING);
         $stringLast = filter_var($last, FILTER_SANITIZE_STRING);
         $stringEmail = filter_var($email, FILTER_SANITIZE_STRING);
+        $stringAddress = filter_var($address, FILTER_SANITIZE_STRING);
+        $stringPhone = filter_var($phone, FILTER_SANITIZE_STRING);
 
 	/*	MYSQL CODE	*/
 
@@ -78,7 +82,7 @@ if (mysqli_num_rows($result) > 0) {
 } else {
     // User does not exist
     // Insert the user data into the database
-    $sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhonumber')";
+    $sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhone')";
 
     if (mysqli_query($conn, $sql)) {
         echo "New record created successfully\n";
