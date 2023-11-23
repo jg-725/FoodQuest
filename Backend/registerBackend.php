@@ -250,7 +250,6 @@ $callback = function ($userData) use ($channel) {
 	}
 };
 
-while (true) {
 	try {
 		// 	MAIN CHANNEL QUALITY CONTROL
 		$channel->basic_qos(null, 1, false);
@@ -271,7 +270,6 @@ while (true) {
         	// Handle Error
         	echo "CAUGHT ERROR: MESSAGE DID NOT GO THROUGH->" . $e->getMessage();
     	}
-}
 //	CLOSING MAIN CHANNEL AND CONNECTION
 $channel->close();
 $connection->close();

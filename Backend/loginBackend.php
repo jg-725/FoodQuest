@@ -169,7 +169,6 @@ $callback = function ($userData) use ($channel) {
 	}
 };
 
-while (true) {
 	try {
 
 		// 	MAIN CHANNEL QUALITY CONTROL
@@ -189,7 +188,7 @@ while (true) {
      	 		// Handle Error
       			echo "ERROR IN SENDING LOGIN MESSAGE-> " . $e->getMessage();
   	}
-}
+
 
 
 //	CLOSING MAIN CHANNEL AND CONNECTION

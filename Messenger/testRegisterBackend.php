@@ -31,17 +31,19 @@ echo '[*] WAITING FOR FRONTEND TO SEND MESSAGES. To exit press CTRL+C', "\n\n";
 
 //	CALLBACK RESPONSIBLE OF PROCESSESSING VALID AND INVALID USER REQUESTS
 $callback = function ($userData) use ($channel) {
-
+	
 	echo '[+] RECEIVED REGISTRATION INPUT FROM FRONTEND',"\n\n";
 	$registerData = json_decode($userData->getBody(), true);
-
+	//print_r($regexMsg);
 	$regexRegister = array();
 
 	$user = $registerData['username'];
 	$pass = $registerData['password'];
-	$first = $registerData['firstName'];
-	$last = $registerData['lastName'];
+	$first = $registerData['first'];
+	$last = $registerData['last'];
 	$email = $registerData['email'];
+	$address = $registerData['address'];
+	$phone = $registerData['phone'];
 
 	//	JSON to String sanitize
 	$stringUser = filter_var($user, FILTER_SANITIZE_STRING);
@@ -49,6 +51,10 @@ $callback = function ($userData) use ($channel) {
 	$stringFirst = filter_var($first, FILTER_SANITIZE_STRING);
         $stringLast = filter_var($last, FILTER_SANITIZE_STRING);
 	$stringEmail = filter_var($email, FILTER_SANITIZE_STRING);
+	$stringAddress = filter_var($address, FILTER_SANITIZE_STRING);
+        $stringPhone = filter_var($phone, FILTER_SANITIZE_STRING);
+
+	echo $user, $pass, $first, $last;
 
 	//	TODO: IMPLEMENT REGEX FOR LOGIN INPUT BEFORE SENDING TO DATABASE
 
@@ -102,6 +108,27 @@ $callback = function ($userData) use ($channel) {
                 $regexEmail = FALSE;
         }
 
+	//	SIMPLE ADDRESS REGEX
+	$valid_address_regex = "/^(\\d{1,}) [a-zA-Z0-9\\s]+(\\,)? [a-zA-Z]+(\\,)? [A-Z]{2} [0-9]{5,6}$/";
+	if (preg_match($valid_address_regex, $stringAddress)) {
+		$regexAddress = TRUE;
+	}
+	else {
+		$regexAddress = FALSE;
+		$invalidRegex['invalidAddress'] = $stringAddress;
+	}
+
+	//	PHONE REGEX
+	$valid_phone_regex = "/^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$/";
+	if (preg_match($valid_phone_regex, $stringPhone)) {
+		$regexPhone = TRUE;
+	}
+	else {
+		$regexPhone = FALSE;
+		$invalidRegex['invalidPhone'] = $stringPhone;
+	}
+
+
 	//	IF STATEMENT TO SEND VALID INPUT TO DATABASE
 
 	if ($regexUser == TRUE && $regexPass == TRUE && $regexFirst == TRUE && $regexLast == TRUE && $regexEmail == TRUE) {
@@ -116,6 +143,8 @@ $callback = function ($userData) use ($channel) {
 			$regexRegister['first'] = $stringFirst;
 			$regexRegister['last'] = $stringLast;
 			$regexRegister['email'] = $stringEmail;
+			$regexRegister['address'] = $stringAddress;
+			$regexRegister['phone'] = $stringPhone;
 		}
 
 		//	ENCODING ARRAY INTO JSON FOR DELIVERY
