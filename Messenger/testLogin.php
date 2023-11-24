@@ -11,12 +11,12 @@ use PhpAmqpLib\Message\AMQPMessage;
 	/*      SENDING LOGIN TO BACKEND FOR PROCESSING       */
 
 	//	Connecting to Main RabbitMQ Node IP
-	$senderConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+	//$senderConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
 	$senderChannel = $senderConnection->channel();	//Establishing Channel Connection for communication
 
 	// 	Declaring exchange for frontend to send/publish messages
-	$senderChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+	//$senderChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
 	//	ROUTING KEY: Relationship between exchange and queue
 	$backendKey = "backend";

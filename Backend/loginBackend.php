@@ -29,7 +29,6 @@ $channel->queue_bind('backend_mailbox', 'frontend_exchange', $binding_key);
 echo '[*] WAITING FOR FRONTEND TO SEND MESSAGES. To exit press CTRL+C', "\n\n";
 
 
-
 //	CALLBACK RESPONSIBLE OF PROCESSESSING VALID AND INVALID USER REQUESTS
 $callback = function ($userData) use ($channel) {
 	$userData = json_decode($msg->getBody(), true);
@@ -137,9 +136,9 @@ $callback = function ($userData) use ($channel) {
 		// Routing key address so RabbitMQ knows where to send the message
 		$error_key = "frontend";
 
-		if (empty($regexMsg)) {
-			$regexMsg['invalidUsername'] = $regexUser;
-			$regexMsg['invalidPassword'] = $regexPass;
+		$ivalidLoginRegex = array();
+		if (empty($invalidLoginRegex)) {
+			$invalidLoginRegex['valid_regex'] = 'FALSE';
 		}
 
 		$invalidEncodedRegex = json_encode($regexMsg);
@@ -162,13 +161,14 @@ $callback = function ($userData) use ($channel) {
 
 		// RETURN ARRAY
 		echo '[@] REGEX PROTOCOL ACTIVATED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
-		print_r($regexMsg);
+		print_r($invalidLoginRegex);
 
 		$invalidRegexChannel->close();
         	$invalidRegexConnection->close();
 	}
 };
 
+while (true) {
 	try {
 
 		// 	MAIN CHANNEL QUALITY CONTROL
@@ -188,7 +188,7 @@ $callback = function ($userData) use ($channel) {
      	 		// Handle Error
       			echo "ERROR IN SENDING LOGIN MESSAGE-> " . $e->getMessage();
   	}
-
+}
 
 
 //	CLOSING MAIN CHANNEL AND CONNECTION

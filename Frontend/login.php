@@ -44,30 +44,26 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 
     	<img src="22.png"/>
 
-    </div>    
-    <form method="POST">
+    </div>
+	<form method="POST">
+    		<input type="text" placeholder="Username" id="username" name="username" class="username" required />
+		<input type="password" placeholder="Password" id="password" name="password" class="password" required />
+        	<button type="submit" value="Log In" name="submit" class="login">Log In</button>
 
-     <input type="text" placeholder="Username" id="username" name="username" class="username" required />
+		<strong/><a href="signup.php"> <p style="text-align:center; font-size:14px; width:24%;position:relative;top:35px; left:6px"/>Sign up?</a>
 
-	    <input type="password" placeholder="Password" id="password" name="password" class="password" required />
-        <button type="submit" value="Log In" name="submit" class="login">Log In</button>
- 
- <strong/><a href="signup.php"> <p style="text-align:center; font-size:14px; width:24%;position:relative;top:35px; left:6px"/>Sign up?</a>
- 
-  <a href="forgot-password.php"><p style="text-align:center;font-size:14px; width: 150%;top:3px; right:10px"/> Forgot password?</a>
- 
-  </form>
+  		<a href="forgot-password.php"><p style="text-align:center;font-size:14px; width: 150%;top:3px; right:10px"/> Forgot password?</a>
+	</form>
 <?php
-	
 
 	// Required PHP and AMQP Libraries to interact with RabbitMQ
-require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
+	require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 	use PhpAmqpLib\Connection\AMQPStreamConnection;
       	use PhpAmqpLib\Message\AMQPMessage;
 
 	// Server request POST initialized to trigger login request flow - IF statement
       	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-      	
+
       	/*      Sending/Publishing Section       */
 
 		// Connecting to Main RabbitMQ Node IP
@@ -81,14 +77,14 @@ require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 		$username = $_POST['username'];
         	$password = $_POST['password'];
 
-  		
+
 		$senderChannel = $senderConnection->channel();	//Establishing Channel Connection for communication
 
 		// Declaring exchange for frontend to send/publish messages
 		$senderChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
  		// Routing key address so RabbitMQ knows where to send the message
-		$loginRoutingKey = "backend";
+		$sendLoginKey = "backend";
 
 		// Creating an array to store user login POST request
 		$loginArray = array();
@@ -109,7 +105,7 @@ require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 		);
 
 		// Publishing message to backend exchange using binding key indicating the receiver
-		$senderChannel->basic_publish($msg, 'frontend_exchange', $loginRoutingKey);
+		$senderChannel->basic_publish($msg, 'frontend_exchange', $sendLoginKey);
 
 		// Message that shows login workflow was triggered
 		echo ' [x] FRONTEND TASK: SENT LOGIN TO BACKEND FOR REGEX PROCESSING', "\n";
@@ -149,7 +145,7 @@ require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 		// Binding corresponding queue and exchange
 		$regexChannel->queue_bind('frontend_mailbox', 'backend_exchange', $regexKey);
 
-		// Establishing callback variable for processing messages from database
+		// Establishing callback variable for processing messages from BACKEND
 		$regexCallback = function ($msgContent) {
 
 			echo "[+] RECEIVED REGEX RESPONSE FROM BACKEND\n";
@@ -157,24 +153,24 @@ require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 			// Decoding return msg from backend into usuable code for processing
 			$decodedBackend = json_decode($msgContent->getBody(), true);
 
-			$validUser = $decodedBackend['validUser'];
+			$validLogin = $decodedBackend['valid_regex'];
 
-			$validPassword = $decodedBackend['validPassword'];
-
-			/* 2 IF statements: Checking if login data is valid */
+			//$validPassword = $decodedBackend['validPassword'];
 
 			// Commands to be executed if username/password does not match
-			if ($validUser == false || $validPassword == false) {
+			if ($validLogin == 'FALSE') {
 				//echo "Username or password does not meet criteria\n";
-				echo "<script>alert('Username or password does not exist in database');</script>";
-				echo "<script>location.href='signup.php';</script>";
+				echo "<script>alert('ENTERED USERNAME OR PASSWORD IS INVALID');</script>";
+				echo "<script>location.href='login.php';</script>";
 			}
 
+			/*
 			// Commands to be executed if data is valid
 			if ($validUser == true && $validPassword == true) {
 				die(header("location:home.php"));
 				//echo "Congrats: Username and Password Are Valid\n";
 			}
+			*/
 		};
 
 		$regexChannel->basic_qos(null, 1, false);
@@ -223,14 +219,14 @@ require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 			/* 2 IF statements: Checking if user exists */
 
 			// Commands to be executed if username/password does not match
-			if ($userExists == FALSE) {
+			if ($userExists == 'FALSE') {
 				//echo "Username or password does not exist in database";
-				echo "<script>alert('Username or password does not exist in database');</script>";
+				echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
 				echo "<script>location.href='login.php';</script>";
 			}
 
 			// Commands to be executed if user exists
-			if ($userExists == TRUE) {
+			else  {
 				die(header("location:home.php"));
 			}
 		};

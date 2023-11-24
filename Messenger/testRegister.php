@@ -3,14 +3,14 @@
 //	TEST FILE FOR REGISTRATION PAGE
 
 //	AMQP Libraries
-require_once __DIR__ .'/vendor/autoload.php';
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+//require_once __DIR__ .'/vendor/autoload.php';
+//use PhpAmqpLib\Connection\AMQPStreamConnection;
+//use PhpAmqpLib\Message\AMQPMessage;
 
 /*              SECTION TO SEND LOGIN TO BACKEND        */
 
 // Establishing a connection to MAIN RabbitMQ server
-$connectionRegister = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$connectionRegister = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 $channelRegister = $connectionRegister->channel();  //Channel connection to send message
 
 // Declaring an EXCHANGE that ROUTES messages from FRONTEND TO BACKEND

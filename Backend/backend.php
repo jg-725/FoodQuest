@@ -5,8 +5,8 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 public function listen()	{
-	$connection = new AMQPStreamConnection('172.26.177.167', 5672, 'test', 'test');
-	$channel = $connection->channel();
+	//$connection = new AMQPStreamConnection('172.26.177.167', 5672, 'test', 'test');
+	//$channel = $connection->channel();
 
 	// Creating exchange to send messages to Messenger
 	$channel->queue_declare('backend_queue', false, true, false, false);

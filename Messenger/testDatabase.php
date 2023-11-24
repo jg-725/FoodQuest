@@ -9,8 +9,8 @@ use PhpAmqpLib\Message\AMQPMessage;
 //	SECTION TO RECEIVE MESSAGES FOR PROCESSING
 
 //	CONNECTING TO MAIN RABBITMQ
-$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-$channel = $connection->channel();
+//$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$channel = $connection->channel();
 
 $channel->exchange_declare('backend_exchange', 'direct', false, false, false);
 

@@ -9,7 +9,7 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 // Server request POST initialized to trigger login request flow - IF statement
-if ($_SERVER['REQUEST_METHOD' === 'POST']) {
+//if ($_SERVER['REQUEST_METHOD' === 'POST']) {
 
 	$username = $_POST['username'];
 	$password = $_POST['password'];
@@ -17,9 +17,9 @@ if ($_SERVER['REQUEST_METHOD' === 'POST']) {
 	/*      SENDING LOGIN TO BACKEND FOR PROCESSING       */
 
 	//	Connecting to Main RabbitMQ Node IP
-	$senderConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+	//$senderConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
-	$senderChannel = $senderConnection->channel();	//Establishing Channel Connection for communication
+	//$senderChannel = $senderConnection->channel();	//Establishing Channel Connection for communication
 
 	// 	Declaring exchange for frontend to send/publish messages
 	$senderChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);

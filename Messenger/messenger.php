@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ .'/vendor/autoload.php';
+//require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 
-$connection = new AMQPStreamConnection('localhost', 5672, '', '');
+//$connection = new AMQPStreamConnection('localhost', 5672, '', '');
 $channel = $connection->channel();
 
 /*
@@ -18,7 +18,7 @@ class RabbitMQServer {
 */
 
 // Declaring an EXCHANGE to receive messages from FRONTEND
-$channel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+//$channel->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
 // Declaring an EXCHANGE to receive messages from BACKEND
 $channel->exchange_declare('backend_exchange', 'direct', false, false, false);
