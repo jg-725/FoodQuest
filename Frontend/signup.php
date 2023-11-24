@@ -37,13 +37,11 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
       </div>
     </div>
   </nav>
-
 	<div class="sign container">
 	<div class="login-block register-box">
 	<div class="logo">
     	<img src="21.png"/>
 </div>
-
 
 
 <form role="form" name="signup" method="POST" onSubmit="return validateForm();" >
@@ -62,18 +60,12 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
         <input type="test" placeholder="Address" class="Address" id="Address" name="address_" autocomplete="address" required="required" />
 
 	<input type="test" placeholder="Phone Number" class="Pnumber" id="Pnumber" name="pnumber_" autocomplete="phone-number" required="required" onkeypress="return isNumberKey(event)" />
-<br/>
-<br/>
-
-
-    <button type="submit" class="login" name="submit">Sign Up</button>
+	<br/>
+	<br/>
+    	<button type="submit" class="login" name="submit">Sign Up</button>
 </form>
-
 </div>
-
 </div>
-
-
 
 <?php
 		//RabbitMQ Code
@@ -84,7 +76,7 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 
 	// POST method initialized to trigger REGISTER request flow - IF statementsender
 	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-	
+
 		// Connecting to Main RabbitMQ Node IP
 		$connectionSend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 		$username = $_POST['username_'];
@@ -96,7 +88,7 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 		$address = $_POST['address_'];
 		$phone = $_POST['pnumber_'];
 
-	$channelSend = $connectionSend->channel();	//Establishing Channel Connection for communication
+		$channelSend = $connectionSend->channel();	//Establishing Channel Connection for communication
 
 		// Declaring exchange for frontend to send/publish messages
 		$channelSend->exchange_declare('frontend_exchange', 'direct', false, false, false);
@@ -145,16 +137,24 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 		/*		SECTION TO RECEIVE MESSAGES FROM BACKEND and DATABASE		*/
 
 
-		//      --- THIS PART WILL LISTEN FOR MESSAGES FROM BACKEND ---
+		//      --- THIS PART WILL RECEIVE MESSAGES FROM BACKEND ---
 
-		// Connecting to RabbitMQ
+		//	Connecting to RabbitMQ
 		$connectionReceiveBackend = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
 		$channelReceiveBackend = $connectionReceiveBackend->channel();
 
+		//	DECLARING EXCHANGE THAT WILL BE ROUTING MESSAGES FROM BACKEND
+                $channelSend->exchange_declare('backend_exchange', 'direct', false, false, false);
+
+		//	BINDING KEY SHOULD MATCH ROUTING KEY SENT BY BACKEND
+                $receiveRegex = "frontend";
+
 		//	Making durable queue for production
 		$channelReceiveBackend->queue_declare('frontend_mailbox', false, true, false, false);
 
+		//	BINDING QUEUE WITH EXCHANGE USING THE BINDING KEY
+		$channelReceiveBackend->queue_bind('frontend_mailbox', 'backend_exchange', $receiveRegex);
 
 		// Establishing callback variable for processing messages from BACKEND
 		$receiverCallback1 = function ($msgContent) {
@@ -162,14 +162,12 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 			// Decoding received msg from database into usuable code for processing
 			$decodedBackend = json_decode($msgContent->getBody(), true);
 
-			$validUser = $decodedBackend['validUser'];
-
-			$validPassword = $decodedBackend['validPassword'];
+			$invalidSignupRegex = $decodedBackend['invalidSignup'];
 
 			/*	2 IF statements: Checking if SIGNUP PASSES REGEX	*/
 
 			// Commands to be executed if username/password does not match
-			if ($validUser == FALSE || $validPassword == FALSE) {
+			if ($invalidSignupRegex == 'FALSE') {
 				echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA');</script>";
                                 //echo "[x] Error on signup: TRY AGAIN";
                                 echo "<script>location.href='signup.php';</script>";
@@ -177,11 +175,13 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 				//echo "<script>location.href='login.php';</script>";
 			}
 
+			/*
 			// Commands to be executed if data is valid
-			if ($validUser == TRUE && $validPassword == TRUE) {
+			else {
 				die(header("location:successReg.php"));
 				//echo "Congrats: Username and Password Are Valid\n";
 			}
+			*/
 		};
 
 		// Triggering the process to consume msgs from BACKEND IF USER FORMAT IS INVALID
@@ -202,11 +202,19 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 
 		// Connecting to RabbitMQ
 		$connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-
 		$channelReceiveDatabase = $connectionReceiveDatabase->channel();
+
+                //      DECLARING EXCHANGE THAT WILL BE ROUTING MESSAGES FROM BACKEND
+                $channelReceiveDatabase->exchange_declare('database_exchange', 'direct', false, false, false);
+
+                //      BINDING KEY SHOULD MATCH ROUTING KEY SENT BY BACKEND
+                $receiveUserExists = "frontend";
 
 		//      DECLARING durable queue for testing
 		$channelReceiveDatabase->queue_declare('frontend_mailbox', false, true, false, false);
+
+                //      BINDING QUEUE WITH EXCHANGE USING THE BINDING KEY
+                $channelReceiveBackend->queue_bind('frontend_mailbox', 'database_exchange', $receiveUserExists);
 
 		// Establishing callback variable for processing messages from database
 		$receiverCallback2 = function ($msgContent) {
@@ -219,7 +227,7 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
         		/* 2 IF statements: Checking if user exists */
 
        			// Commands to be executed if username/password does not match
-        		if ($newUser == FALSE) {
+        		if ($newUser == 'FALSE') {
                 		//echo "[x] DATABASE ERROR: USER ALREADY EXISTS\n";
 				//echo "TRY AGAIN\n\n";
                 		echo "<script>alert('USER ALREADY EXISTS: ENTER USERNAME AND PASSWORD');</script>";
@@ -228,7 +236,8 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 
         		// Commands to be executed if user exists
         		if ($newUser == TRUE) {
-                		die(header("location:home.php"));
+				echo "<script>alert('ENTER USERNAME AND PASSWORD TO LOGIN');</script>";
+                		die(header("location:login.php"));
 				//echo "[+] WELCOME ";
         		}
 		};
@@ -273,6 +282,5 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
       return true;
   }
 </script>
-
 </body>
 </html>

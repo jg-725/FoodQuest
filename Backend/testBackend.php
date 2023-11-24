@@ -8,7 +8,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 // RECEIVING MESSAGES FROM FRONTEND
 
-$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+$connection = new AMQPStreamConnection('localhost', 5672, 'test', 'test');
 $channel = $connection->channel();
 
 $channel->exchange_declare('frontend_exchange', 'direct', false, false, false);

@@ -60,15 +60,15 @@ $callback = function ($userData) use ($channel) {
 	/*	TODO: IMPLEMENT REGEX FOR LOGIN INPUT BEFORE SENDING TO DATABASE	*/
 
 	//      CREATING INVALID ARRAY TO CATCH INVALID REGEX INPUT
-        $invalidRegex = array();
+        //$invalidRegex = array();
 
 	//	USERNAME REGEX
 	if (preg_match('/^[a-zA-Z0-9_]+$/', $stringUser)) {
 		$regexUser = TRUE;
 	}
 	else {
-		$regexUser = FALSE;
-		$invalidRegex['invalidUser'] = $stringUser;
+		$regexUser = "FALSE";
+		//$invalidRegex['invalidUser'] = $stringUser;
 		//$regexUser = "Invalid Username";
 	}
 
@@ -80,8 +80,8 @@ $callback = function ($userData) use ($channel) {
 		$regexPass = TRUE;
 	}
 	else {
-		$regexPass = FALSE;
-		$invalidRegex['invalidPassword'] = $stringPass;
+		$regexPass = "FALSE";
+		//$invalidRegex['invalidPassword'] = $stringPass;
 		//$regexPass = "Error: Password DOES NOT meet criteria";
 	}
 
@@ -90,7 +90,7 @@ $callback = function ($userData) use ($channel) {
 		$passwordConfirm = TRUE;
 	}
 	else {
-		$passwordConfirm = FALSE;
+		$passwordConfirm = "FALSE";
 	}
 
 	//      FIRST NAME REGEX
@@ -98,8 +98,8 @@ $callback = function ($userData) use ($channel) {
                 $regexFirst = TRUE;
         }
         else {
-                $regexFirst = FALSE;
-		$invalidRegex['invalidFirst'] = $stringFirst;
+                $regexFirst = "FALSE";
+		//$invalidRegex['invalidFirst'] = $stringFirst;
                 //$regexUser = "Invalid Username";
         }
 
@@ -108,8 +108,8 @@ $callback = function ($userData) use ($channel) {
                 $regexLast = TRUE;
         }
         else {
-                $regexLast = FALSE;
-		$invalidRegex['invalidLast'] = $stringLast;
+                $regexLast = "FALSE";
+		//$invalidRegex['invalidLast'] = $stringLast;
         }
 
 	//      EMAIL REGEX
@@ -121,8 +121,8 @@ $callback = function ($userData) use ($channel) {
                 $regexEmail = TRUE;
         }
         else {
-                $regexEmail = FALSE;
-		$invalidRegex['invalidEmail'] = $stringEmail;
+                $regexEmail = "FALSE";
+		//$invalidRegex['invalidEmail'] = $stringEmail;
         }
 
 	//	SIMPLE ADDRESS REGEX
@@ -131,8 +131,8 @@ $callback = function ($userData) use ($channel) {
 		$regexAddress = TRUE;
 	}
 	else {
-		$regexAddress = FALSE;
-		$invalidRegex['invalidAddress'] = $stringAddress;
+		$regexAddress = "FALSE";
+		//$invalidRegex['invalidAddress'] = $stringAddress;
 	}
 
 	//	PHONE REGEX
@@ -141,8 +141,8 @@ $callback = function ($userData) use ($channel) {
 		$regexPhone = TRUE;
 	}
 	else {
-		$regexPhone = FALSE;
-		$invalidRegex['invalidPhone'] = $stringPhone;
+		$regexPhone = "FALSE";
+		//$invalidRegex['invalidPhone'] = $stringPhone;
 	}
 
 	//	IF STATEMENT TO SEND VALID INPUT TO DATABASE
@@ -220,11 +220,11 @@ $callback = function ($userData) use ($channel) {
 		// Routing key address so RabbitMQ knows where to send the message
 		$error_key = "frontend";
 
-		/*
+		$invalidRegex = array();
+
 		if (empty($invalidRegex)) {
-			$regexMsg['invalidSignup'] = 'INVALID REGEX';
+			$invalidRegex['invalidSignup'] = 'FALSE';
 		}
-		*/
 
 		$invalidEncodedRegex = json_encode($invalidRegex);
 
@@ -243,12 +243,13 @@ $callback = function ($userData) use ($channel) {
 
 		// RETURN ARRAY
 		echo '[@] REGEX PROTOCOL ACTIVATED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
-		print_r($regexMsg);
+		print_r($invalidRegex);
 
 		$invalidRegexChannel->close();
         	$invalidRegexConnection->close();
 	}
 };
+while (true) {
 
 	try {
 		// 	MAIN CHANNEL QUALITY CONTROL
@@ -270,6 +271,7 @@ $callback = function ($userData) use ($channel) {
         	// Handle Error
         	echo "CAUGHT ERROR: MESSAGE DID NOT GO THROUGH->" . $e->getMessage();
     	}
+}
 //	CLOSING MAIN CHANNEL AND CONNECTION
 $channel->close();
 $connection->close();

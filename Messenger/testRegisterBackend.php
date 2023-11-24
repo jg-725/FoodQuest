@@ -3,18 +3,18 @@
 /*	TESTING: RECEIVING REGISTER MESSAGE FROM FRONTEND	*/
 
 //	NECESSARY AMQP LIBRARIES FOR PHP
-require_once __DIR__ .'/vendor/autoload.php';
+//require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 //	CONNECTING TO MAIN RABBIT NODE
-$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
 //	ACTIVING MAIN CHANNEL FOR FRONTEND CONNECTION
 $channel = $connection->channel();
 
 //	DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
-$channel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+//$channel->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
 //	USING NON DURABLE QUEUE FOR TESTING: Third parameter is false
 $channel->queue_declare('backend_mailbox', false, false, false, false);

@@ -72,13 +72,13 @@ if (!$conn) {
 }
 
 // Check if the user already exists in the database
-$sql_check = "SELECT * FROM Users WHERE Username = '$stringUser' OR email = '$stringEmail'";
+$sql_check = "SELECT * FROM Users WHERE username = '$stringUser' OR email = '$stringEmail'";
 $result = mysqli_query($conn, $sql_check);
 
 	if (mysqli_num_rows($result) > 0) {
     		// User already exists
     		echo "User already exists in the database.\n";
-    		$newUser = FALSE;
+    		$newUser = 'FALSE';
 	} else {
     		// User does not exist
     		// Insert the user data into the database
@@ -88,7 +88,7 @@ $result = mysqli_query($conn, $sql_check);
         		echo "New record created successfully\n";
         		$newUser = TRUE;
     		} else {
-        		echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+        		echo "DATABASE ERROR: " . $sql . "<br>" . mysqli_error($conn);
     		}
 	}
 	// Close the database connection
@@ -100,16 +100,8 @@ $result = mysqli_query($conn, $sql_check);
 	//	ARRAY TO STORE MESSAGE
 	$returnMsg = array();
 
-	if ($newUser == TRUE) {
-		if (empty($returnMsg)) {        // Check if array is empty
-                	$returnMsg['newUser'] = $newUser;
-        	}
-	}
-	else {
-		if (empty($returnMsg)) {        // Check if array is empty
-                	$returnMsg['newUser'] = $newUser;
-                	//$returnMsg['newUser'] = $userCondition;
-        	}
+	if (empty($returnMsg)) {
+		$returnMsg['newUser'] = $newUser;
 	}
 
 	//	GETTING MYSQL MESSAGE READY FOR DELIVERY TO FRONTEND
@@ -154,6 +146,7 @@ $result = mysqli_query($conn, $sql_check);
 	$existsChannel->close();
         $existsConnection->close();
 };
+while (true) {
 	try {
 		$channelDB->basic_qos(null, 1, false);
 		$channelDB->basic_consume('database_mailbox', '', false, true, false, false, $callbackDB);
@@ -167,7 +160,7 @@ $result = mysqli_query($conn, $sql_check);
         	// Handle Error
         	echo "ErrorException CAUGHT AT: " . $e->getMessage();
     	}
-
+}
 
 //	Closing MAIN channel and connection
 $channelDB->close();

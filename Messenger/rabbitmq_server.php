@@ -5,7 +5,7 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 // Creating the connection to rabbitmq
-$connection = new AMQPStreamConnection('localhost', 5672, 'test', 'test');
+//$connection = new AMQPStreamConnection('localhost', 5672, 'test', 'test');
 
 $channel = $connection->channel();
 
