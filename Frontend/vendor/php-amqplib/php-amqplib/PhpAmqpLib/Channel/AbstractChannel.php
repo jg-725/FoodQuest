@@ -167,8 +167,7 @@ abstract class AbstractChannel
     }
 
     /**
-     * @return array
-     */
+     * @return array */
     public function getMethodQueue()
     {
         return $this->method_queue;
