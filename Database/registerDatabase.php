@@ -152,9 +152,10 @@ while (true) {
 		$channelDB->basic_consume('database_mailbox', '', false, true, false, false, $callbackDB);
 
 		while(count($channelDB->callbacks)) {
-       		$channelDB->wait();
-		echo 'NO MORE INCOMING MESSAGES FROM BACKEND', "\n\n";
-		break;
+       			$channelDB->wait();
+			echo 'NO MORE INCOMING MESSAGES FROM BACKEND', "\n\n";
+			break;
+		}
 	}
 	catch (ErrorException $e) {
         	// Handle Error
