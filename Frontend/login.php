@@ -108,7 +108,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 		$senderChannel->basic_publish($msg, 'frontend_exchange', $sendLoginKey);
 
 		// Message that shows login workflow was triggered
-		echo ' [x] FRONTEND TASK: SENT LOGIN TO BACKEND FOR REGEX PROCESSING', "\n";
+		echo ' [x] FRONTEND TASK: SENT LOGIN TO BACKEND', "\n";
 		print_r($loginArray);
 		echo "\n\n";
 
@@ -127,7 +127,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 
 		/*		2 SECTIONS TO RECEIVE MESSAGES FROM BACKEND and DATABASE		*/
 
-
+		/*
 		//      --- SECTION 1: WILL LISTEN FOR MESSAGES FROM BACKEND ---
 
 		// Connecting to RabbitMQ
@@ -164,13 +164,12 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 				echo "<script>location.href='login.php';</script>";
 			}
 
-			/*
 			// Commands to be executed if data is valid
 			if ($validUser == true && $validPassword == true) {
 				die(header("location:home.php"));
 				//echo "Congrats: Username and Password Are Valid\n";
 			}
-			*/
+
 		};
 
 		$regexChannel->basic_qos(null, 1, false);
@@ -187,6 +186,8 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 		// Terminating channel and connection for receivin msgs
 		$regexChannel->close();
 		$regexConnection->close();
+		*/
+
 
 
 		//      --- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---
@@ -207,7 +208,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 		$channelReceiveDatabase->queue_bind('frontend_mailbox', 'database_exchange', $loginKey);
 
 		// Establishing callback variable for processing messages from database
-		$receiverCallback = function ($msgContent) {
+		$receiverCallback = function ($msgContent) use ($channelReceiveDatabase) {
 
 			// Decoding received msg from database into usuable code for processing
 			$decodedDBLogin = json_decode($msgContent->getBody(), true);
@@ -219,7 +220,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 			/* 2 IF statements: Checking if user exists */
 
 			// Commands to be executed if username/password does not match
-			if ($userExists == 'FALSE') {
+			if ($userExists == FALSE) {
 				//echo "Username or password does not exist in database";
 				echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
 				echo "<script>location.href='login.php';</script>";
@@ -243,8 +244,6 @@ if (isset($_SESSION['username']) && isset($_SESSION["password"])) {
 		// Terminating channel and connection for receivin msgs
 		$channelReceiveDatabase->close();
 		$connectionReceiveDatabase->close();
-
-
 	}
 	//	END OF PHP SERVER POST SESSION
 ?>

@@ -57,198 +57,76 @@ $callback = function ($userData) use ($channel) {
 	$stringAddress = filter_var($address, FILTER_SANITIZE_STRING);
 	$stringPhone = filter_var($phoneNum, FILTER_SANITIZE_STRING);
 
-	/*	TODO: IMPLEMENT REGEX FOR LOGIN INPUT BEFORE SENDING TO DATABASE	*/
+	/*	TODO: IMPLEMENT PASSWORD HASH BEFORE SENDING TO DATABASE	*/
 
-	//      CREATING INVALID ARRAY TO CATCH INVALID REGEX INPUT
-        //$invalidRegex = array();
-
-	//	USERNAME REGEX
-	if (preg_match('/^[a-zA-Z0-9_]+$/', $stringUser)) {
-		$regexUser = TRUE;
-	}
-	else {
-		$regexUser = "FALSE";
-		//$invalidRegex['invalidUser'] = $stringUser;
-		//$regexUser = "Invalid Username";
-	}
-
-	//	PASSWORD REGEX
-	$strong_password = "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/";
-
-	if (preg_match($strong_password, $stringPass)) {
-		//$regexPass = "Password meets criteria";
-		$regexPass = TRUE;
-	}
-	else {
-		$regexPass = "FALSE";
-		//$invalidRegex['invalidPassword'] = $stringPass;
-		//$regexPass = "Error: Password DOES NOT meet criteria";
-	}
-
-	//	CONFIRM PASSWORD VERIFICATION
-	if ($stringConfirm == $stringPass) {
-		$passwordConfirm = TRUE;
-	}
-	else {
-		$passwordConfirm = "FALSE";
-	}
-
-	//      FIRST NAME REGEX
-        if (preg_match('/^[a-zA-Z]+$/', $stringFirst)) {
-                $regexFirst = TRUE;
+	//	CHECKING IF PASSWORDS ARE EQUAL
+        if ($stringConfirm == $stringPass) {
+                $passwordConfirm = TRUE;
+		//      Hash the password using the default algorithm (currently bcrypt)
+        	$hashedPassword = password_hash($stringPass, PASSWORD_DEFAULT);
         }
         else {
-                $regexFirst = "FALSE";
-		//$invalidRegex['invalidFirst'] = $stringFirst;
-                //$regexUser = "Invalid Username";
+                $passwordConfirm = FALSE;
         }
 
-	//      LAST NAME REGEX
-        if (preg_match('/^[a-zA-Z]+$/', $stringLast)) {
-                $regexLast = TRUE;
-        }
-        else {
-                $regexLast = "FALSE";
-		//$invalidRegex['invalidLast'] = $stringLast;
-        }
-
-	//      EMAIL REGEX
-
-	// testing = "/^[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/";
-	$email_validation = '/^\\S+@\\S+\\.\\S+$/';
-
-        if (preg_match($email_validation, $stringEmail)) {
-                $regexEmail = TRUE;
-        }
-        else {
-                $regexEmail = "FALSE";
-		//$invalidRegex['invalidEmail'] = $stringEmail;
-        }
-
-	//	SIMPLE ADDRESS REGEX
-	$valid_address_regex = "/^(\\d{1,}) [a-zA-Z0-9\\s]+(\\,)? [a-zA-Z]+(\\,)? [A-Z]{2} [0-9]{5,6}$/";
-	if (preg_match($valid_address_regex, $stringAddress)) {
-		$regexAddress = TRUE;
-	}
-	else {
-		$regexAddress = "FALSE";
-		//$invalidRegex['invalidAddress'] = $stringAddress;
-	}
-
-	//	PHONE REGEX
-	$valid_phone_regex = "/^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$/";
-	if (preg_match($valid_phone_regex, $stringPhone)) {
-		$regexPhone = TRUE;
-	}
-	else {
-		$regexPhone = "FALSE";
-		//$invalidRegex['invalidPhone'] = $stringPhone;
-	}
-
-	//	IF STATEMENT TO SEND VALID INPUT TO DATABASE
-
-	if ($regexUser == TRUE && $regexPass == TRUE && $regexFirst == TRUE && $regexLast == TRUE && $regexEmail == TRUE && $regexAddress == TRUE && $regexPhone == TRUE && $passwordConfirm == TRUE) {
 		// Command line message
-		echo "[+] LOGIN INPUT MEETS SITE REQUIREMENTS";
+		echo "[+] SIGNUP PASSWORD HAS BEEN HASHED";
 
-		$regexRegister = array();
+		$consumeRegister = array();
+
 		//	CREATING ARRAY OF VALID REGEX LOGIN
-		if (empty($regexRegister)) {
-			$regexRegister['username'] = $stringUser;
-			$regexRegister['password'] = $stringPass;
-			$regexRegister['first'] = $stringFirst;
-			$regexRegister['last'] = $stringLast;
-			$regexRegister['email'] = $stringEmail;
-			$regexRegister['address'] = $stringAddress;
-			$regexRegister['phone'] = $stringPhone;
+		if (empty($consumeRegister)) {
+			$consumeRegister['username'] = $stringUser;
+			$consumeRegister['password'] = $stringPass;
+			$consumeRegister['first'] = $stringFirst;
+			$consumeRegister['last'] = $stringLast;
+			$consumeRegister['email'] = $stringEmail;
+			$consumeRegister['address'] = $stringAddress;
+			$consumeRegister['phone'] = $stringPhone;
+			$consumeRegister['password_confirm'] = $passwordConfirm;
 		}
 
 		//	ENCODING ARRAY INTO JSON FOR DELIVERY
-		$validRegexArray = json_encode($regexRegister);
+		$sendRegister = json_encode($consumeRegister);
 
 		//	CONNECTION TO MAIN RABBIT NODE
-		$validRegexConnection = new AMQPStreamConnection('192.168.194.2',
+		$passwordConnection = new AMQPStreamConnection('192.168.194.2',
 					5672,
 					'foodquest',
 					'rabbit123'
 		);
 
 		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE
-		$validRegexChannel = $validRegexConnection->channel();
+		$passwordChannel = $passwordConnection->channel();
 
 		//	EXCHANGE THAT WILL ROUTE MESSAGES TO DATABASE
-		$validRegexChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
+		$passwordChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
 
 		//	ROUTING KEY TO DETERMINE DESTINATION
-		$valid_key = 'database';
-
-		//	Separate Queue to send to DATABASE
-		//$validRegexChannel->queue_declare('validRegex', false, false, false, false);
+		$hash_key = 'database';
 
 		//	Getting message ready for delivery
-		$validRegexMessage = new AMQPMessage(
-					$validRegexArray,
+		$passwordMessage = new AMQPMessage(
+					$sendRegister,
 					array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
 		);
 
 		// 	Publishing message to frontend via queue
-        	$validRegexChannel->basic_publish(
-					$validRegexMessage,
+        	$passwordChannel->basic_publish(
+					$passwordMessage,
 					'backend_exchange',
-					$valid_key
+					$hash_key
 		);
 
 		//	COMMAND RESPONSE TO SIGNAL MSG WAS PROCESSES AND SENT
-		echo '[@] REGEX PROTOCOL ACTIVATED [@]', "\nMESSAGE TO DATABASE\n";
-		print_r($regexRegister);
+		echo '[@] HASHING PROTOCOL ACTIVATED [@]', "\nMESSAGE TO DATABASE\n";
+		print_r($consumeRegister);
 
-		$validRegexChannel->close();
-        	$validRegexConnection->close();
+		$passwordChannel->close();
+        	$passwordConnection->close();
 
-	}
-	//	ELSE STATEMENT TO CATCH INVALID INPUT AND SEND IT BACK TO FRONTEND
-	else {
-
-		//      Process to send message back
-                $invalidRegexConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-                $invalidRegexChannel = $invalidRegexConnection->channel();
-
-
-		// Declaring the exchange to send the message
-		$invalidRegexChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
-
-		// Routing key address so RabbitMQ knows where to send the message
-		$error_key = "frontend";
-
-		$invalidRegex = array();
-
-		if (empty($invalidRegex)) {
-			$invalidRegex['invalidSignup'] = 'FALSE';
-		}
-
-		$invalidEncodedRegex = json_encode($invalidRegex);
-
-		//	Getting message ready for delivery
-		$invalidRegexMessage = new AMQPMessage(
-					$invalidEncodedRegex,
-					array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
-		);
-
-		// 	Publishing message to frontend via queue
-        	$invalidRegexChannel->basic_publish(
-					$invalidRegexMessage,
-					'backend_exchange',
-					$error_key
-		);
-
-		// RETURN ARRAY
-		echo '[@] REGEX PROTOCOL ACTIVATED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
-		print_r($invalidRegex);
-
-		$invalidRegexChannel->close();
-        	$invalidRegexConnection->close();
-	}
 };
+
 while (true) {
 
 	try {

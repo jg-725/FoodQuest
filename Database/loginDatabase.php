@@ -32,7 +32,7 @@ echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 
 //	CALLBACK RESPONSIBLE OF PROCESSING INCOMING MESSAGES
 $callback = function ($regexMsg) use ($channel) {
-	echo '[+] RECEIVED VALID REGEX LOGIN FROM BACKEND', "\n", $msg->getBody(), "\n\n";
+	echo '[+] RECEIVED LOGIN FROM BACKEND', "\n", $msg->getBody(), "\n\n";
 
 	$validLoginRegex =json_decode($msg->getBody(), true);
 
@@ -70,7 +70,7 @@ $callback = function ($regexMsg) use ($channel) {
 			$username = $row['username'];
 	} else {
     		// User does not exist
-    		$userExists = 'FALSE';
+    		$userExists = FALSE;
     		//$hash = null;
 	}
 

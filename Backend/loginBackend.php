@@ -44,128 +44,57 @@ $callback = function ($userData) use ($channel) {
 	$stringUser = filter_var($user, FILTER_SANITIZE_STRING);
     	$stringPass = filter_var($pass, FILTER_SANITIZE_STRING);
 
-	//	TODO: IMPLEMENT REGEX FOR LOGIN INPUT BEFORE SENDING TO DATABASE
+	$arrayMsg = array();
 
-	//	USERNAME REGEX
-	if (preg_match('/^[a-zA-Z0-9_]+$/', $stringUser)) {
-		$regexUser = TRUE;
-	}
-	else {
-		$regexUser = FALSE;
-		//$regexUser = "Invalid Username";
-	}
+	//	DELETED IF STATEMENT
 
-	//	PASSWORD REGEX
-	if (preg_match('/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/', $stringPass)) {
-		//$regexPass = "Password meets criteria";
-		$regexPass = TRUE;
-	}
-	else {
-		$regexPass = FALSE;
-		//$regexPass = "Error: Password DOES NOT meet criteria";
-	}
-
-	$regexMsg = array();
-
-	//	IF STATEMENT TO SEND VALID INPUT TO DATABASE
-
-	if ($regexUser == TRUE && $regexPass == TRUE) {
 		// Command line message
-		echo "[+] LOGIN INPUT MEETS SITE REQUIREMENTS";
+		echo "[+] LOGIN INPUT HAS BEEN SENT TO DATABASE\n";
 
 		//	CREATING ARRAY OF VALID REGEX LOGIN
-		if (empty($regexMsg)) {
-			$regexMsg['username'] = $stringUser;
-			$regexMsg['password'] = $stringPass;
+		if (empty($arrayMsg)) {
+			$arrayMsg['username'] = $stringUser;
+			$arrayMsg['password'] = $stringPass;
 		}
 
 		//	ENCODING ARRAY INTO JSON FOR DELIVERY
-		$validRegexArray = json_encode($regexMsg);
+		$encodedArray = json_encode($arrayMsg);
 
 		//	CONNECTION TO MAIN RABBIT NODE
-		$validRegexConnection = new AMQPStreamConnection('192.168.194.2',
+		$backendLoginConnection = new AMQPStreamConnection('192.168.194.2',
 					5672,
 					'foodquest',
 					'rabbit123'
 		);
 
 		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE
-		$validRegexChannel = $validRegexConnection->channel();
+		$backendLoginChannel = $backendLoginConnection->channel();
 
 		//	EXCHANGE THAT WILL ROUTE MESSAGES TO DATABASE
-		$validRegexChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
+		$backendLoginChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
 
 		//	ROUTING KEY TO DETERMINE DESTINATION
-		$valid_key = 'database';
-
-		//	Separate Queue to send to DATABASE
-		//$validRegexChannel->queue_declare('validRegex', false, false, false, false);
+		$routing_key_database = 'database';
 
 		//	Getting message ready for delivery
-		$validRegexMessage = new AMQPMessage(
-					$validRegexArray,
+		$backendMessage = new AMQPMessage(
+					$encodedArray,
 					array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
 		);
 
-		// 	Publishing message to frontend via queue
-        	$validRegexChannel->basic_publish(
-					$validRegexMessage,
+		// 	Publishing message to DATABASE VIA BACKEND EXCHANGE
+        	$backendLoginChannel->basic_publish(
+					$backendMessage,
 					'backend_exchange',
-					$valid_key
+					$routing_key_database
 		);
 
 		//	COMMAND RESPONSE TO SIGNAL MSG WAS PROCESSES AND SENT
-		echo '[@] REGEX PROTOCOL ACTIVATED [@]', "\nMESSAGE TO DATABASE\n";
-		print_r($regexMsg);
+		echo '[@] SENDING PROTOCOL ACTIVATED [@]', "\nMESSAGE TO DATABASE\n";
+		print_r($arrayMsg);
 
-		$validRegexChannel->close();
-        	$validRegexConnection->close();
-
-	}
-	//	ELSE STATEMENT TO CATCH INVALID INPUT AND SEND IT BACK TO FRONTEND
-	else {
-
-		//      Process to send message back
-                $invalidRegexConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-                $invalidRegexChannel = $invalidRegexConnection->channel();
-
-
-		// Declaring the exchange to send the message
-		$invalidRegexChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
-
-		// Routing key address so RabbitMQ knows where to send the message
-		$error_key = "frontend";
-
-		$ivalidLoginRegex = array();
-		if (empty($invalidLoginRegex)) {
-			$invalidLoginRegex['valid_regex'] = 'FALSE';
-		}
-
-		$invalidEncodedRegex = json_encode($regexMsg);
-
-		//	Separate Queue to send to frontend
-		//$invalidRegexChannel->queue_declare('regexQueue', false, false, false, false);
-
-		//	Getting message ready for delivery
-		$invalidRegexMessage = new AMQPMessage(
-					$invalidEncodedRegex,
-					array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
-		);
-
-		// 	Publishing message to frontend via queue
-        	$invalidRegexChannel->basic_publish(
-					$invalidRegexMessage,
-					'backend_exchange',
-					$error_key
-		);
-
-		// RETURN ARRAY
-		echo '[@] REGEX PROTOCOL ACTIVATED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
-		print_r($invalidLoginRegex);
-
-		$invalidRegexChannel->close();
-        	$invalidRegexConnection->close();
-	}
+		$backendLoginChannel->close();
+        	$backendLoginConnection->close();
 };
 
 while (true) {
