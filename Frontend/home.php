@@ -1,8 +1,5 @@
 <?php
 session_start(); // Start the session
-if (!isset($_SESSION["username"]) && !isset($_SESSION["OurIPs"])) {
-  die(header("Location:login.php")); // Redirect to login page if user is not logged in
-}
 
 
 ?>
