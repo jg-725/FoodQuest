@@ -115,8 +115,8 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 			$send['phone'] = $phone;
 		}
 
-		// Turning array into JSON for compatability
-		//$login_data = implode($send);
+	// Turning array into JSON for compatability
+	//$login_data = implode($send);
 		$encodedSignup = json_encode($send);
 
 		// Creating AMQPMessage protocol once login data is ready for delivery
@@ -128,7 +128,8 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 		// Publishing data to RabbitMQ exchange for processing
 		$channelSignup->basic_publish($msg, 'frontend_exchange', $routing_key);
 
-		echo ' [x] Frontend Task: SENT USER REGISTRATION TO BACKEND FOR PROCESSING', "\n";
+echo ' [x] Frontend Task: SENT USER REGISTRATION TO BACKEND FOR PROCESSING', "\n";
+ 		//echo ' [x] Frontend Task: Send register form to Backend Exchange', "\n";
 		print_r($send);
 		echo "\n\n";
 
@@ -136,8 +137,60 @@ if (isset($_SESSION['username_']) && isset($_SESSION["password_"])) {
 		$channelSignup->close();
 		$connectionSignup->close();
 
-		/*		TODO: ONE CALLBACK FUNCTION TO RECEIVE MESSAGES DATABASE		*/
+		$channelReceiveBackend = $connectionReceiveBackend->channel();
 
+		//	DECLARING EXCHANGE THAT WILL BE ROUTING MESSAGES FROM BACKEND
+                $channelReceiveBackend->exchange_declare('backend_exchange', 'direct', false, false, false);
+
+		//	BINDING KEY SHOULD MATCH ROUTING KEY SENT BY BACKEND
+                $receiveRegex = "frontend";
+
+		//Making durable queue for production
+		$channelReceiveBackend->queue_declare('frontend_mailbox', false, true, false, false);
+
+		//BINDING QUEUE WITH EXCHANGE USING THE BINDING KEY
+		$channelReceiveBackend->queue_bind('frontend_mailbox', 'backend_exchange', $receiveRegex);
+
+		// Establishing callback variable for processing messages from BACKEND
+		$receiverCallback1 = function ($msgContent) {
+
+			// Decoding received msg from database into usuable code for processing
+			$decodedBackend = json_decode($msgContent->getBody(), true);
+
+			$invalidSignupRegex = $decodedBackend['invalidSignup'];
+
+			/*	2 IF statements: Checking if SIGNUP PASSES REGEX	*/
+
+			// Commands to be executed if username/password does not match
+			if ($invalidSignupRegex == 'FALSE') {
+				echo "<script>alert('SIGN UP INPUT DOES NOT MEET CRITERIA');</script>";
+                                //echo "[x] Error on signup: TRY AGAIN";
+                                echo "<script>location.href='signup.php';</script>";
+				//echo "<script>alert('Username or password does not exist in database');</script>";
+				//echo "<script>location.href='login.php';</script>";
+			};//I put semiclone on there.
+
+			/*
+			// Commands to be executed if data is valid
+			else {
+				die(header("location:successReg.php"));
+				//echo "Congrats: Username and Password Are Valid\n";
+			}
+			*/
+		};
+
+		// Triggering the process to consume msgs from BACKEND IF USER FORMAT IS INVALID
+		$channelReceiveBackend->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback1);
+
+		// while loop to keep checking for incoming messages from BACKEND
+		while ($channelReceiveBackend->is_open()) {
+			$channelReceiveBackend->wait();
+			break;
+		}
+
+		// Terminating channel and connection for receivin msgs
+		$channelReceiveBackend->close();
+		$connectionReceiveBackend->close();
 
 		//      --- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---
 
