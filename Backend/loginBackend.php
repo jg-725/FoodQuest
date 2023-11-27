@@ -28,17 +28,16 @@ $channel->queue_bind('backend_mailbox', 'frontend_exchange', $binding_key);
 // Terminal message to signal we are waiting for messages from frontend
 echo '[*] WAITING FOR FRONTEND TO SEND MESSAGES. To exit press CTRL+C', "\n\n";
 
-
 //	CALLBACK RESPONSIBLE OF PROCESSESSING VALID AND INVALID USER REQUESTS
-$callback = function ($userData) use ($channel) {
-	$userData = json_decode($msg->getBody(), true);
+$callback = function ($loginData) use ($channel) {
+	$userData = json_decode($loginData->getBody(), true);
 
-	echo '[+] RECEIVED LOGIN FROM FRONTEND', "\n", $msg->getBody(), "\n\n";
+	echo '[+] RECEIVED LOGIN FROM FRONTEND', "\n", $loginData->getBody(), "\n\n";
 
 	$regexMsg = array();
 
-	$user = $data['username'];
-	$pass = $data['password'];
+	$user = $userData['username'];
+	$pass = $userData['password'];
 
 	//	JSON to String sanitize
 	$stringUser = filter_var($user, FILTER_SANITIZE_STRING);
