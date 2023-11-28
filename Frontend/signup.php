@@ -164,6 +164,9 @@ session_start();
                 if ($newUser == 'TRUE' && $regexUser == 'TRUE') {
                     echo "<script>alert('CONGRATS, NEW ACCOUNT CREATED');</script>";
                     header("Location:login.php"); // Redirect using PHP
+                     echo "<script>location.href='login.php';</script>";
+                    
+                    
                     //exit; // Ensure the script stops execution after redirection
                 }
 
