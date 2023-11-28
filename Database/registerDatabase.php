@@ -9,7 +9,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 // SECTION TO RECEIVE MESSAGES FOR PROCESSING
 
 // CONNECTING TO MAIN RABBITMQ
-$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 $channelDB = $connectionDB->channel();
 
 $channelDB->exchange_declare('backend_exchange', 'direct', false, false, false);
@@ -197,7 +197,7 @@ $callbackDB = function ($msg) use ($channelDB) {
         /* PROCESS TO SEND USER EXISTS MESSAGE TO FRONTEND - RABBITMQ */
 
         // ESTABLISHING CONNECTION
-        $existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+        //$existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
         if (!$existsConnection) {
                 die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
