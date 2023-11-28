@@ -178,21 +178,24 @@ $callbackDB = function ($msg) use ($channelDB) {
     }
 };
 
-try {
-    $channelDB->basic_qos(null, 1, false);
-    $channelDB->basic_consume('database_mailbox', '', false, true, false, false, $callbackDB);
+while (true) {
+	try {
+		$channelDB->basic_qos(null, 1, false);
+		$channelDB->basic_consume('database_mailbox', '', false, true, false, false, $callbackDB);
 
-    while (count($channelDB->callbacks)) {
-        $channelDB->wait();
-        echo 'NO MORE INCOMING MESSAGES FROM BACKEND', "\n\n";
-        break;
-    }
-} catch (ErrorException $e) {
-    // Handle Error
-    echo "ErrorException CAUGHT AT: " . $e->getMessage();
+		while(count($channelDB->callbacks)) {
+       			$channelDB->wait();
+			echo 'NO MORE INCOMING MESSAGES FROM BACKEND', "\n\n";
+			break;
+		}
+	}
+	catch (ErrorException $e) {
+        	// Handle Error
+        	echo "ErrorException CAUGHT AT: " . $e->getMessage();
+    	}
 }
 
-// Closing MAIN channel and connection
+//	Closing MAIN channel and connection
 $channelDB->close();
 $connectionDB->close();
 
