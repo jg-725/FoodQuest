@@ -126,7 +126,7 @@ $callbackDB = function ($msg) use ($channelDB) {
 		$returnMsg['new_user'] = FALSE;
         }
 
-        $invalidEncodedRegex = json_encode($invalidRegex);
+        $invalidEncodedRegex = json_encode($returnMsg);
 
         //    Getting message ready for delivery
         $regexMessage = new AMQPMessage($invalidEncodedRegex, array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT));
@@ -137,7 +137,7 @@ $callbackDB = function ($msg) use ($channelDB) {
         //    COMMAND LINE MESSAGE
         echo '[@] REGEX CHECK PROTOCOL ACTIVATED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
 
-        print_r($invalidRegex);    //Displaying array in the command line
+        print_r($returnMsg);    //Displaying array in the command line
 
         //    CLOSING CHANNEL AND CONNECTION TALKING TO FRONTEND
         $regexChannel->close();
