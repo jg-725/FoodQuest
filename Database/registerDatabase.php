@@ -106,6 +106,7 @@ $callbackDB = function ($msg) use ($channelDB) {
         $regexPhone = FALSE;
     }
 
+
     //    SENDING REGEX ERROR MESSAGE TO FRONTEND
     if ($regexUser == FALSE || $regexPass == FALSE || $regexFirst == FALSE || $regexLast == FALSE || $regexEmail == FALSE || $regexAddress == FALSE || $regexPhone == FALSE) {
         //  	Process to send message back to FRONTEND
@@ -118,10 +119,11 @@ $callbackDB = function ($msg) use ($channelDB) {
         //  	Routing key address so RabbitMQ knows where to send the message
         $regexFrontend = "frontend";
 
-        $invalidRegex = array();
+        $returnMsg = array();
 
-        if (empty($invalidRegex)) {
-            $invalidRegex['valid_signup'] = FALSE;
+        if (empty($returnMsg)) {
+        	$returnMsg['valid_signup'] = FALSE;
+		$returnMsg['new_user'] = FALSE;
         }
 
         $invalidEncodedRegex = json_encode($invalidRegex);
@@ -197,7 +199,8 @@ $callbackDB = function ($msg) use ($channelDB) {
         $returnMsg = array();
 
         if (empty($returnMsg)) {
-            $returnMsg['new_user'] = $newUser;
+		$returnMsg['valid_signup'] = TRUE;
+            	$returnMsg['new_user'] = $newUser;
         }
 
         //  	GETTING MYSQL MESSAGE READY FOR DELIVERY TO FRONTEND
