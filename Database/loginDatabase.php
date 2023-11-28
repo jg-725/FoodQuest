@@ -1,23 +1,21 @@
-
- 
 <?php
 
-/*  	TESTING: RECEIVING LOGIN MESSAGES FROM BACKEND   	*/
+/* TESTING: RECEIVING LOGIN MESSAGES FROM BACKEND */
 
 require_once __DIR__ . '/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-//    MAIN SECTION TO RECEIVE VALID REGEX MESSAGES FROM BACKEND
+// MAIN SECTION TO RECEIVE VALID REGEX MESSAGES FROM BACKEND
 
-//    CONNECTING TO MAIN RABBITMQ
+// CONNECTING TO MAIN RABBITMQ
 $connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 $channel = $connection->channel();
 
-//    EXCHANGE THAT MESSAGES WILL COME FROM
+// EXCHANGE THAT MESSAGES WILL COME FROM
 $channel->exchange_declare('backend_exchange', 'direct', false, false, false);
 
-//    Using DURABLE QUEUES FOR DELIVERY: Third parameter is TRUE
+// Using DURABLE QUEUES FOR DELIVERY: Third parameter is TRUE
 $channel->queue_declare('database_mailbox', false, true, false, false);
 
 // Binding key
@@ -29,23 +27,18 @@ $channel->queue_bind('database_mailbox', 'backend_exchange', $loginDB);
 // Terminal message to signal we are waiting for messages from BACKEND
 echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 
-//    CALLBACK RESPONSIBLE OF PROCESSING INCOMING MESSAGES
+// CALLBACK RESPONSIBLE FOR PROCESSING INCOMING MESSAGES
 $callback = function ($msg) use ($channel) {
     echo '[+] RECEIVED LOGIN FROM BACKEND', "\n", $msg->getBody(), "\n\n";
 
     $validLoginRegex = json_decode($msg->getBody(), true);
 
-    //    GETTING VARIABLES SENT FROM BACKEND
-    $user = $validLoginRegex['username'];
-    $pass = $validLoginRegex['password'];
+    // GETTING VARIABLES SENT FROM BACKEND
+    $user = filter_var($validLoginRegex['username'], FILTER_SANITIZE_STRING);
+    $pass = filter_var($validLoginRegex['password'], FILTER_SANITIZE_STRING);
 
-    //  	JSON variables to String sanitize
-    $stringUser = filter_var($user, FILTER_SANITIZE_STRING);
-    $stringPass = filter_var($pass, FILTER_SANITIZE_STRING);
-
-    //    VARIABLES TO CONNECT TO MYSQL DATABASE SERVER
+    // VARIABLES TO CONNECT TO MYSQL DATABASE SERVER
     $servername = "192.168.194.3";
-    //$servername = "localhost";
     $username_db = "test";
     $password_db = "test";
     $dbname = "FoodQuest";
@@ -58,63 +51,57 @@ $callback = function ($msg) use ($channel) {
     }
 
     // Check if the user exists in the database
-    $sql_check = "SELECT * FROM Users WHERE BINARY username = '$stringUser'";
+    $sql_check = "SELECT * FROM Users WHERE BINARY username = '$user'";
     $result = mysqli_query($conn, $sql_check);
 
     if (mysqli_num_rows($result) > 0) {
         // User exists
         $row = mysqli_fetch_assoc($result);
-        $userExists = TRUE;
+        $userExists = true;
         $id = $row['id'];
         $username = $row['username'];
     } else {
         // User does not exist
-        $userExists = FALSE;
-        //$hash = null;
+        $userExists = false;
     }
 
     // Close the database connection
     mysqli_close($conn);
 
-    /*    GETTING RETURN ARRAY TO SEND TO FRONTEND - RABBITMQ    */
+    /* GETTING RETURN ARRAY TO SEND TO FRONTEND - RABBITMQ */
 
-    $existsMsg = array();
-    //  	ENCODING RETURN MESSAGE
-    if (empty($existsMsg)) {
-        $existsMsg['userExists'] = $userExists;
-        $existsMsg['userID'] = $id;
-        $existsMsg['username'] = $username;
-    }
+    $existsMsg = [
+        'userExists' => $userExists,
+        'username' => $username,
+    ];
 
-    //    GETTING MYSQL MESSAGE READY FOR DELIVERY TO FRONTEND
+    // GETTING MYSQL MESSAGE READY FOR DELIVERY TO FRONTEND
     $encodedExistsMsg = json_encode($existsMsg);
 
-    /*    SENDING USER EXISTS MESSAGE TO FRONTEND    */
+    /* SENDING USER EXISTS MESSAGE TO FRONTEND */
 
     $existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
     $existsChannel = $existsConnection->channel();
 
-    //    TODO: ADD EXCHANGE, QUEUE, BINDING KEY, AND QUEUE BIND
-
-    //    EXCHANGE THAT WILL ROUTE MESSAGES TO FRONTEND
+    // EXCHANGE THAT WILL ROUTE MESSAGES TO FRONTEND
     $existsChannel->exchange_declare('database_exchange', 'direct', false, false, false);
 
-    //    ROUTING KEY TO DETERMINE DESTINATION
+    // ROUTING KEY TO DETERMINE DESTINATION
     $exists_key = 'frontend';
 
-    //    Getting message ready for delivery
+    // Getting message ready for delivery
     $existsMessage = new AMQPMessage(
         $encodedExistsMsg,
         array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
     );
 
-    //     Publishing message to exchange via routing key
+    // Publishing message to exchange via routing key
     $existsChannel->basic_publish($existsMessage, 'database_exchange', $exists_key);
 
-    //    COMMAND LINE MESSAGE
+    // COMMAND LINE MESSAGE
     echo '[@] MYSQL CHECK PROTOCOL ACTIVATED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
 
-    print_r($existsMsg);    //Displaying array on the command line
+    print_r($existsMsg); // Displaying array on the command line
 
     $existsChannel->close();
     $existsConnection->close();
@@ -130,11 +117,11 @@ try {
         break;
     }
 } catch (ErrorException $e) {
-    //    ERROR HANDLING
+    // ERROR HANDLING
     echo "CAUGHT DATABASE ErrorException: " . $e->getMessage();
 }
 
-//    CLOSING MAIN CHANNEL AND CONNECTION
+// CLOSING MAIN CHANNEL AND CONNECTION
 $channel->close();
 $connection->close();
 
