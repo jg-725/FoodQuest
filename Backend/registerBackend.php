@@ -8,8 +8,15 @@ require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
+//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
+
+
 //	CONNECTING TO MAIN RABBIT NODE
 $connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+if (!$connection) {
+	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+}
 
 //	ACTIVING MAIN CHANNEL FOR FRONTEND CONNECTION
 $channel = $connection->channel();
@@ -89,12 +96,18 @@ $callback = function ($userData) use ($channel) {
 		//	ENCODING ARRAY INTO JSON FOR DELIVERY
 		$sendRegister = json_encode($consumeRegister);
 
+
 		//	CONNECTION TO MAIN RABBIT NODE
 		$passwordConnection = new AMQPStreamConnection('192.168.194.2',
 					5672,
 					'foodquest',
 					'rabbit123'
 		);
+
+		if (!$passwordConnection) {
+        		die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+		}
+
 
 		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE
 		$passwordChannel = $passwordConnection->channel();

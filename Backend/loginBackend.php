@@ -7,8 +7,17 @@ require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
+//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
+
+//      TODO: LOOP THROUGH ARRAY TO SEND DATA TO WORKING NODE
+
 //	CONNECTING TO MAIN RABBIT NODE
 $connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+if (!$regexConnection) {
+	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+}
+
 
 //	ACTIVING MAIN CHANNEL FOR FRONTEND CONNECTION
 $channel = $connection->channel();
@@ -50,7 +59,7 @@ $callback = function ($loginData) use ($channel) {
 		// Command line message
 		echo "[+] LOGIN INPUT HAS BEEN SENT TO DATABASE\n";
 
-		//	CREATING ARRAY OF VALID REGEX LOGIN
+		//	CREATING ARRAY OF LOGIN
 		if (empty($arrayMsg)) {
 			$arrayMsg['username'] = $stringUser;
 			$arrayMsg['password'] = $stringPass;
@@ -65,6 +74,10 @@ $callback = function ($loginData) use ($channel) {
 					'foodquest',
 					'rabbit123'
 		);
+
+		if (!$backendLoginConnection) {
+        		die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+		}
 
 		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE
 		$backendLoginChannel = $backendLoginConnection->channel();

@@ -31,11 +31,18 @@ echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 $callback = function ($msg) use ($channel) {
     echo '[+] RECEIVED LOGIN FROM BACKEND', "\n", $msg->getBody(), "\n\n";
 
-    $validLoginRegex = json_decode($msg->getBody(), true);
+    $loginData = json_decode($msg->getBody(), true);
 
-    // GETTING VARIABLES SENT FROM BACKEND
-    $user = filter_var($validLoginRegex['username'], FILTER_SANITIZE_STRING);
-    $pass = filter_var($validLoginRegex['password'], FILTER_SANITIZE_STRING);
+	print_r($loginData);
+
+    //    GETTING VARIABLES SENT FROM BACKEND
+    $user = $validLoginRegex['username'];
+    $pass = $validLoginRegex['password'];
+
+
+    //  	JSON variables to String sanitize
+    $stringUser = filter_var($user, FILTER_SANITIZE_STRING);
+    $stringPass = filter_var($pass, FILTER_SANITIZE_STRING);
 
     // VARIABLES TO CONNECT TO MYSQL DATABASE SERVER
     $servername = "192.168.194.3";
@@ -47,22 +54,26 @@ $callback = function ($msg) use ($channel) {
 
     // Check if the connection is successful
     if (!$conn) {
-        die("[X] CONNECTION TO MYSQL SERVER FAILED [X] " . mysqli_connect_error());
+        die("[X] CONNECTION TO MYSQL SERVER FAILED [X]" . mysqli_connect_error());
     }
 
     // Check if the user exists in the database
-    $sql_check = "SELECT * FROM Users WHERE BINARY username = '$user'";
+    $sql_check = "SELECT * FROM Users WHERE BINARY username = '$stringUser'";
     $result = mysqli_query($conn, $sql_check);
 
     if (mysqli_num_rows($result) > 0) {
-        // User exists
+
+        //	CHECKING IF USER EXISTS
         $row = mysqli_fetch_assoc($result);
-        $userExists = true;
-        $id = $row['id'];
+
+	echo " [+] ENTERED USER MATCHES WITH DATABASE DATA.\n";
+        $userExists = 'TRUE';
+        //$id = $row['id'];
         $username = $row['username'];
     } else {
-        // User does not exist
-        $userExists = false;
+        //	COMMAND LINE MESSAGE THAT USER EXISTS
+	echo " [-] ENTERED LOGIN DOES NOT MATCH WITH ANY USER IN DATABASE.\n";
+        $userExists = 'FALSE';
     }
 
     // Close the database connection
@@ -71,7 +82,7 @@ $callback = function ($msg) use ($channel) {
     /* GETTING RETURN ARRAY TO SEND TO FRONTEND - RABBITMQ */
 
     $existsMsg = [
-        'userExists' => $userExists,
+        'user_exists' => $userExists,
         'username' => $username,
     ];
 
@@ -99,7 +110,7 @@ $callback = function ($msg) use ($channel) {
     $existsChannel->basic_publish($existsMessage, 'database_exchange', $exists_key);
 
     // COMMAND LINE MESSAGE
-    echo '[@] MYSQL CHECK PROTOCOL ACTIVATED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
+    echo '[@] MYSQL LOGIN CHECK PROTOCOL EXECUTED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
 
     print_r($existsMsg); // Displaying array on the command line
 
@@ -107,20 +118,22 @@ $callback = function ($msg) use ($channel) {
     $existsConnection->close();
 };
 
-try {
-    $channel->basic_qos(null, 1, false);
-    $channel->basic_consume('database_mailbox', '', false, true, false, false, $callback);
+//	KEEPING THE QUEUES AND EXCHANGES LOOKING FOR INCOMING MESSAGES
+while (true) {
+	try {
+    		$channel->basic_qos(null, 1, false);
+    		$channel->basic_consume('database_mailbox', '', false, true, false, false, $callback);
 
-    while (count($channel->callbacks)) {
-        $channel->wait();
-        echo 'NO MORE INCOMING LOGIN MESSAGES FROM BACKEND', "\n\n";
-        break;
-    }
-} catch (ErrorException $e) {
-    // ERROR HANDLING
-    echo "CAUGHT DATABASE ErrorException: " . $e->getMessage();
+    		while (count($channel->callbacks)) {
+        		$channel->wait();
+        		echo 'NO MORE LOGIN MESSAGES FROM BACKEND', "\n\n";
+        		break;
+    		}
+	} catch (ErrorException $e) {
+    		// ERROR HANDLING
+    		echo "CAUGHT DATABASE ErrorException: " . $e->getMessage();
+	}
 }
-
 // CLOSING MAIN CHANNEL AND CONNECTION
 $channel->close();
 $connection->close();

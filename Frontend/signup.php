@@ -65,8 +65,12 @@ session_start();
 
         // POST method initialized to trigger REGISTER request flow - IF statementsender
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+		//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
+
             // Connecting to Main RabbitMQ Node IP
             $connectionSignup = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
             if (!$connectionSignup) {
                 die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
             }
@@ -158,19 +162,21 @@ session_start();
                 // Commands to be executed if the user exists
 
                 if ($newUser == TRUE && $regexUser == TRUE) {
-                    echo "<script>alert('CONGRATS, ENTER USERNAME AND PASSWORD TO LOGIN');</script>";
-                    header("Location: login.php"); // Redirect using PHP
-                    exit; // Ensure the script stops execution after redirection
+                    echo "<script>alert('CONGRATS, NEW ACCOUNT CREATED');</script>";
+                    header("Location:login.php"); // Redirect using PHP
+                    //exit; // Ensure the script stops execution after redirection
                 }
 
                 // Commands to be executed if the username/password does not match
                 elseif ($newUser == FALSE && $regexUser == TRUE) {
-                    echo "<script>alert('USER ALREADY EXISTS: ENTER USERNAME AND PASSWORD');</script>";
-                    echo "<script>location.href='login.php';</script>";
+                    echo "<script>alert('USERNAME IS NO LONGER AVAILABLE: ENTER A NEW USERNAME');</script>";
+                    echo "<script>location.href='signup.php';</script>";
                 }
 		else {
 			echo "<script>alert('INVALID INPUT: PLEASE TRY AGAIN');</script>";
-			echo "<script>location.href='signup.php';</script>";
+			die(header("Location:signup.php"));
+			//echo "<script>location.href='signup.php';</script>";
+
 		}
 
             };
