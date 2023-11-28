@@ -157,17 +157,22 @@ session_start();
                 /* 3 IF statements: Checking if the user exists and valid input */
                 // Commands to be executed if the user exists
 
-                if ($newUser == TRUE) {
+                if ($newUser == TRUE && $regexUser == TRUE) {
                     echo "<script>alert('CONGRATS, ENTER USERNAME AND PASSWORD TO LOGIN');</script>";
                     header("Location: login.php"); // Redirect using PHP
                     exit; // Ensure the script stops execution after redirection
                 }
 
                 // Commands to be executed if the username/password does not match
-                if ($newUser == FALSE) {
+                elseif ($newUser == FALSE && $regexUser == TRUE) {
                     echo "<script>alert('USER ALREADY EXISTS: ENTER USERNAME AND PASSWORD');</script>";
                     echo "<script>location.href='login.php';</script>";
                 }
+		else {
+			echo "<script>alert('INVALID INPUT: PLEASE TRY AGAIN');</script>";
+			echo "<script>location.href='signup.php';</script>";
+		}
+
             };
 
             // Triggering the process to consume msgs from DATABASE IF USER EXISTS

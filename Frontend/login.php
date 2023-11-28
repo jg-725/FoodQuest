@@ -133,15 +133,14 @@ session_start(); // Start the session
                     /* 2 IF statements: Checking if user exists */
 
                     // Commands to be executed if username/password does not match
-                    if ($userExists == FALSE) {
-                        //echo "Username or password does not exist in the database";
-                        echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
-                        echo "<script>location.href='login.php';</script>";
+                    if ($userExists == TRUE) {
+                        die(header("location:home.php"));
                     }
 
                     // Commands to be executed if the user exists
                     else  {
-                        die(header("location:home.php"));
+			echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
+                        echo "<script>location.href='login.php';</script>";
                     }
                 };
 
