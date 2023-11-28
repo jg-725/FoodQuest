@@ -161,7 +161,7 @@ session_start();
                 /* 3 IF statements: Checking if the user exists and valid input */
                 // Commands to be executed if the user exists
 
-                if ($newUser == TRUE && $regexUser == TRUE) {
+                if ($newUser == 'TRUE' && $regexUser == 'TRUE') {
                     echo "<script>alert('CONGRATS, NEW ACCOUNT CREATED');</script>";
                     header("Location:login.php"); // Redirect using PHP
                      echo "<script>location.href='login.php';</script>";
@@ -171,7 +171,7 @@ session_start();
                 }
 
                 // Commands to be executed if the username/password does not match
-                elseif ($newUser == FALSE && $regexUser == TRUE) {
+                elseif ($newUser == 'FALSE' && $regexUser == 'TRUE') {
                     echo "<script>alert('USERNAME IS NO LONGER AVAILABLE: ENTER A NEW USERNAME');</script>";
                     echo "<script>location.href='signup.php';</script>";
                 }
