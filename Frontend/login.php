@@ -55,6 +55,9 @@ session_start(); // Start the session
 
                 /*  	Sending/Publishing Section   	*/
 
+		//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
+
+
                 // Connecting to Main RabbitMQ Node IP
                 $senderConnection = new AMQPStreamConnection(
                     '192.168.194.2',
@@ -126,20 +129,20 @@ session_start(); // Start the session
                     // Decoding received msg from database into usable code for processing
                     $decodedDBLogin = json_decode($msgContent->getBody(), true);
 
-                    $userExists = $decodedDBLogin['userExists'];
-                    $userID = $decodedDBLogin['userID'];
+                    $userExists = $decodedDBLogin['user_exists'];
+                    //$userID = $decodedDBLogin['userID'];
                     $dbUser = $decodedDBLogin['username'];
 
-                    /* 2 IF statements: Checking if user exists */
 
-                    // Commands to be executed if username/password does not match
-                    if ($userExists == TRUE) {
+                    //	IF USERNAME IS FOUND IN DATABASE: REDIRECT TO HOME PAGE
+                    if ($userExists == 'TRUE') {
                         die(header("location:home.php"));
+			echo "<script>alert('HELLO '", $dbUser");</script>";
                     }
 
-                    // Commands to be executed if the user exists
+                    //	REDIRECTING TO LOGIN PAGE IF USER DOES IS NOT FOUND
                     else  {
-			echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
+			echo "<script>alert('ENTERED LOGIN DOES NOT EXIST IN DATABASE');</script>";
                         echo "<script>location.href='login.php';</script>";
                     }
                 };
