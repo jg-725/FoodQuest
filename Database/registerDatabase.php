@@ -86,7 +86,7 @@ $callbackDB = function ($msg) use ($channelDB) {
     //  	EMAIL REGEX
     $strong_email = "/^[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/";
     //$simple_email = '/^\\S+@\\S+\\.\\S+$/';
-    $regexEmail = preg_match($strong_email, $stringEmail)) {
+    $regexEmail = preg_match($strong_email, $stringEmail));
 
 
     // SIMPLE ADDRESS REGEX
