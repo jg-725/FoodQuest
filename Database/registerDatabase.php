@@ -68,36 +68,79 @@ $callbackDB = function ($msg) use ($channelDB) {
 
     // USERNAME REGEX
     $regexUser = preg_match('/^[a-zA-Z0-9_]+$/', $stringUser);
-
+	//	USERNAME REGEX
+	if (preg_match('/^[a-zA-Z0-9_]+$/', $stringUser)) {
+		echo "VALID USERNAME";
+	}
+	else {
+		echo "WRONG USERNAME";
+	}
 
     // PASSWORD REGEX
     $strong_password = "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/";
     $regexPass = preg_match($strong_password, $stringPass);
-
+        if (preg_match($strong_password, $stringPass)) {
+                echo "VALID PASSWORD";
+        }
+        else {
+                echo "WRONG PASSWORD";
+        }
 
     // FIRST NAME REGEX
     $regexFirst = preg_match('/^[a-zA-Z]+$/', $stringFirst);
 
+        if (preg_match('/^[a-zA-Z]+$/', $stringFirst)) {
+                echo "VALID FIRST NAME";
+        }
+        else {
+                echo "WRONG FIRST NAME";
+        }
 
     // LAST NAME REGEX
     $regexLast = preg_match('/^[a-zA-Z]+$/', $stringLast);
 
+        if (preg_match('/^[a-zA-Z]+$/', $stringLast)) {
+                echo "VALID LAST NAME";
+        }
+        else {
+                echo "WRONG LAST NAME";
+        }
 
     //  	EMAIL REGEX
     $strong_email = "/^[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/";
     //$simple_email = '/^\\S+@\\S+\\.\\S+$/';
     $regexEmail = preg_match($strong_email, $stringEmail);
 
+        if (preg_match($strong_email, $stringEmail)) {
+                echo "VALID EMAIL";
+        }
+        else {
+                echo "WRONG EMAIL";
+        }
+
 
     // SIMPLE ADDRESS REGEX
     $valid_address_regex = "/^(\\d{1,}) [a-zA-Z0-9\\s]+(\\,)? [a-zA-Z]+(\\,)? [A-Z]{2} [0-9]{5,6}$/";
     $regexAddress = preg_match($valid_address_regex, $stringAddress);
 
+        if (preg_match($valid_address_regex, $stringAddress)) {
+                echo "VALID ADDRESS";
+        }
+        else {
+                echo "WRONG ADDRESS";
+        }
 
     // PHONE REGEX
     $valid_phone_regex = "/^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$/";
     $regexPhone = preg_match($valid_phone_regex, $stringPhone);
-    
+
+        if (preg_match($valid_phone_regex, $stringPhone)) {
+                echo "VALID PHONE NUMBER";
+        }
+        else {
+                echo "WRONG PHONE NUMBER";
+        }
+
     // CHECKING IF NEW USER DATA EXISTS IFnumber1
     if ($regexUser == TRUE && $regexPass == TRUE && $regexFirst == TRUE && $regexLast == TRUE && $regexEmail == TRUE && $regexAddress == TRUE && $regexPhone == TRUE) {
 
