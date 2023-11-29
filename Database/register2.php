@@ -9,8 +9,8 @@ use PhpAmqpLib\Message\AMQPMessage;
 // SECTION TO RECEIVE MESSAGES FOR PROCESSING
 
 // CONNECTING TO MAIN RABBITMQ
-$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-$channelDB = $connectionDB->channel();
+//$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$channelDB = $connectionDB->channel();
 
 $channelDB->exchange_declare('backend_exchange', 'direct', false, false, false);
 
@@ -83,8 +83,8 @@ $callbackDB = function ($msg) use ($channelDB) {
 
         /* PROCESS TO SEND USER EXISTS MESSAGE TO FRONTEND - RABBITMQ */
         // ESTABLISHING CONNECTION
-        $existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-        $existsChannel = $existsConnection->channel();
+       // $existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+       // $existsChannel = $existsConnection->channel();
 
         // EXCHANGE THAT WILL ROUTE DATABASE MESSAGES
         $existsChannel->exchange_declare('database_exchange', 'direct', false, false, false);
@@ -117,7 +117,7 @@ $callbackDB = function ($msg) use ($channelDB) {
         $existsConnection->close();
     
 };
-
+/*
 while (true) {
 	try {
 		$channelDB->basic_qos(null, 1, false);
@@ -138,5 +138,5 @@ while (true) {
 //	Closing MAIN channel and connection
 $channelDB->close();
 $connectionDB->close();
-
+*/
 ?>

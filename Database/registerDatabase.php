@@ -97,58 +97,8 @@ $callbackDB = function ($msg) use ($channelDB) {
     // PHONE REGEX
     $valid_phone_regex = "/^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$/";
     $regexPhone = preg_match($valid_phone_regex, $stringPhone);
-
-
-    // SENDING REGEX ERROR MESSAGE TO FRONTEND
-    if ($regexUser == FALSE || $regexPass == FALSE || $regexFirst == FALSE || $regexLast == FALSE || $regexEmail == FALSE || $regexAddress == FALSE || $regexPhone == FALSE) {
-
-	//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
-
-	//	TODO: LOOP THROUGH ARRAY TO SEND DATA TO WORKING NODE
-
-
-        // Process to send message back to FRONTEND
-        $regexConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-
-        if (!$regexConnection) {
-        	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
-        }
-
-        $regexChannel = $regexConnection->channel();
-
-        // EXCHANGE THAT WILL ROUTE DATABASE MESSAGES
-        $regexChannel->exchange_declare('database_exchange', 'direct', false, false, false);
-
-        // Routing key address so RabbitMQ knows where to send the message
-        $regexFrontend = "frontend";
-
-        $returnMsg = [
-            'valid_signup' => 'FALSE',
-            'new_user' => 'FALSE',
-        ];
-
-        $invalidEncodedRegex = json_encode($returnMsg);
-
-        // Getting message ready for delivery
-        $regexMessage = new AMQPMessage($invalidEncodedRegex, array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT));
-
-        // Publishing regex message to exchange via routing key
-        $regexChannel->basic_publish($regexMessage, 'database_exchange', $regexFrontend);
-
-        // Command line message
-        echo '[@] REGEX CHECK PROTOCOL ACTIVATED [@]', "\n\n[x] SIGNUP INPUT DOES NOT MEET SITE REQUIREMENTS\n";
-
-        print_r($returnMsg); // Displaying array in the command line
-
-        // Closing channel and connection talking to FRONTEND
-        $regexChannel->close();
-        $regexConnection->close();
-    }
-
-
-	/*	IF STATEMENT TO CHECK FOR MYSQL FOR ALL VALID REGEX SIGNUP	*/
-
-    // CHECKING IF NEW USER DATA EXISTS
+    
+    // CHECKING IF NEW USER DATA EXISTS IFnumber1
     if ($regexUser == TRUE && $regexPass == TRUE && $regexFirst == TRUE && $regexLast == TRUE && $regexEmail == TRUE && $regexAddress == TRUE && $regexPhone == TRUE) {
 
         /* MYSQL CODE */
@@ -235,6 +185,58 @@ $callbackDB = function ($msg) use ($channelDB) {
         $existsChannel->close();
         $existsConnection->close();
     }
+
+    // SENDING REGEX ERROR MESSAGE TO FRONTEND ifnumber2
+    else  {
+
+	//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
+
+	//	TODO: LOOP THROUGH ARRAY TO SEND DATA TO WORKING NODE
+
+
+        // Process to send message back to FRONTEND
+        $regexConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+        if (!$regexConnection) {
+        	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+        }
+
+        $regexChannel = $regexConnection->channel();
+
+        // EXCHANGE THAT WILL ROUTE DATABASE MESSAGES
+        $regexChannel->exchange_declare('database_exchange', 'direct', false, false, false);
+
+        // Routing key address so RabbitMQ knows where to send the message
+        $regexFrontend = "frontend";
+
+        $returnMsg = [
+            'valid_signup' => 'FALSE',
+            'new_user' => 'FALSE',
+        ];
+
+        $invalidEncodedRegex = json_encode($returnMsg);
+
+        // Getting message ready for delivery
+        $regexMessage = new AMQPMessage($invalidEncodedRegex, array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT));
+
+        // Publishing regex message to exchange via routing key
+        $regexChannel->basic_publish($regexMessage, 'database_exchange', $regexFrontend);
+
+        // Command line message
+        echo '[@] REGEX CHECK PROTOCOL ACTIVATED [@]', "\n\n[x] SIGNUP INPUT DOES NOT MEET SITE REQUIREMENTS\n";
+
+        print_r($returnMsg); // Displaying array in the command line
+
+        // Closing channel and connection talking to FRONTEND
+        $regexChannel->close();
+        $regexConnection->close();
+    }
+
+
+	/*	IF STATEMENT TO CHECK FOR MYSQL FOR ALL VALID REGEX SIGNUP	*/
+
+    
+
 };
 
 while (true) {
