@@ -50,7 +50,7 @@ session_start(); // Start the session
                     <button class="rd-navbar-toggle" data-rd-navbar-toggle=".rd-navbar-nav-wrap"><span></span></button>
                     <!--RD Navbar Brand-->
                     <div class="rd-navbar-brand">
-                      <!--Brand--><a class="brand" href="index.html"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
+                      <!--Brand--><a class="brand" href="home.php"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
                     </div>
                   </div>
                   <div class="rd-navbar-nav-wrap">
@@ -59,14 +59,14 @@ session_start(); // Start the session
                       </li>                     
                      
                     
- <li class="rd-nav-item"><a class="rd-nav-link" href="#programs">Logout</a>
-                      </li>                     
+                    
   <li class="rd-nav-item"><a class="rd-nav-link" href="#about">About</a>
                       </li>
                       <li class="rd-nav-item"><a class="rd-nav-link" href="#clients">Clients</a>                     
                       
-                      
                     </ul>
+                     <li class="rd-nav-item"><a class="rd-nav-link" href="logout.php">Logout</a>
+                      </li> 
                   </div>
                 </div>
               </div>
@@ -259,7 +259,7 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" href="#">Order now</a>
+                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" href="#">Order now!</a>
                 <div><a class="link-border" href="#">open menu (pdf)</a></div>
               </div>
             </div>
@@ -431,7 +431,7 @@ session_start(); // Start the session
         <div class="container">
           <div class="row row-50 justify-content-between">
             <div class="col-xl-3 col-md-6">
-              <!--Brand--><a class="brand" href="index.html"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
+              <!--Brand--><a class="brand" href="home.php"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
               <p class="rights"><span>&copy;&nbsp;</span><span class="copyright-year"></span><span>&nbsp;</span><span>FoodQuest</span><span>.&nbsp;All Rights Reserved. Design by Group10</span></p>
             </div>
             <div class="col-xl-3 col-md-6">
