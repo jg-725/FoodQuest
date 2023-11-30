@@ -259,7 +259,7 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" href="#">Order now!</a>
+                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" onclick="redirectToURL()">Order now!</a>
                 <div><a class="link-border" href="#">open menu (pdf)</a></div>
               </div>
             </div>
@@ -274,7 +274,7 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">If you need daily balanced menu including breakfast &amp; dinner, then Balanced package is what you need!</p><a class="button button-primary" href="#">Order now</a>
+                <p class="product-text">If you need daily balanced menu including breakfast &amp; dinner, then Balanced package is what you need!</p><a class="button button-primary" onclick="redirectToURL()">Order now</a>
                 <div><a class="link-border" href="#">open menu (pdf)</a></div>
               </div>
             </div>
@@ -289,7 +289,7 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">Special menu developed for our vegan clients who appreciate healthy and plant-based food.</p><a class="button button-primary" href="#">Order now</a>
+                <p class="product-text">Special menu developed for our vegan clients who appreciate healthy and plant-based food.</p><a class="button button-primary" onclick="redirectToURL()">Order now</a>
                 <div><a class="link-border" href="#">open menu (pdf)</a></div>
               </div>
             </div>
@@ -490,5 +490,16 @@ session_start(); // Start the session
     <script src="js/core.min.js"></script>
     <script src="js/script.js"></script>
     <!--coded by kraken-->
+     <script>
+        // JavaScript function to handle the button click event
+        function redirectToURL() {
+            // Specify the URL you want to redirect to
+            var targetURL = "http://127.0.0.1:5000/"; // Replace with your desired URL
+
+            // Use window.location.href to navigate to the specified URL
+            window.location.href = targetURL;
+        }
+    </script>
+
   </body>
 </html>
