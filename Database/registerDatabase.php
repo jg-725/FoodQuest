@@ -167,7 +167,7 @@ $callbackDB = function ($msg) use ($channelDB) {
 
             	//	RESULT > 0: USER EXISTS
             	echo " [-] ENTERED USER ALREADY EXISTS IN FOODQUEST DATABASE.\n";
-            	$newUser = 'FALSE';
+            	$newUser = 'TRUE';
 		$validSignup = 'TRUE';
         } else {
             	//	USER DOES NOT EXIST AND MEETS REGEX REQUIREMENTS
@@ -175,9 +175,18 @@ $callbackDB = function ($msg) use ($channelDB) {
             	//	INSERTING NEW USER INTO FOODQUEST DATABASE
             	$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonumber) VALUES ('$validUser', '$validPass', '$validFirst', '$validLast', '$validEmail', '$validAddress', '$validPhone')";
 
+
+   	/*$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhone')";
+
+*/
+
+
+
+
+
             	if (mysqli_query($conn, $sql)) {
                 	echo "[+] NEW USER WAS SUCCESSFULLY REGISTERED INTO FOODQUEST DATABASE [+]\n";
-                	$newUser = 'TRUE';
+                	$newUser = 'FALSE';
 			$validSignup = 'TRUE';
             	} else {
                 	echo "FOODQUEST DATABASE ERROR: " . $sql . "<br>" . mysqli_error($conn);
