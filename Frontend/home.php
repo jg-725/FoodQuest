@@ -1,7 +1,8 @@
 <?php
 session_start(); // Start the session
-
-
+if (!isset($_SESSION["username"]) && isset($_SESSION["user_id"])) {
+  die(header("Location: login.php")); // Redirect to login page if user is not logged in
+}
 ?>
 
 
@@ -58,15 +59,14 @@ session_start(); // Start the session
  <li class="rd-nav-item"><a class="rd-nav-link"> Welcome : <?php echo $_SESSION["username"]; ?> </a>
                       </li>                     
                      
-                    
-                    
   <li class="rd-nav-item"><a class="rd-nav-link" href="#about">About</a>
                       </li>
-                      <li class="rd-nav-item"><a class="rd-nav-link" href="#clients">Clients</a>                     
+                      <li class="rd-nav-item"><a class="rd-nav-link" href="#clients">Clients</a> </il>                    
                       
-                    </ul>
+                    
                      <li class="rd-nav-item"><a class="rd-nav-link" href="logout.php">Logout</a>
                       </li> 
+                      </ul>
                   </div>
                 </div>
               </div>
@@ -75,13 +75,16 @@ session_start(); // Start the session
               
             
               
-                <h3>Complete your order</h3>
+                <h3>Write your review about our service</h3>
                 <!--RD Mailform-->
                 <form class="rd-form rd-mailform" data-form-output="form-output-global" data-form-type="contact" method="POST" action="bat/rd-mailform.php">
                   <div class="row row-22">
                     <div class="col-12">
                       <div class="form-wrap">
+                      
+                      
                         <!-- Select 2-->
+                        <!--
                         <select class="form-input select" data-placeholder="Choose a food package" data-constraints="@Required">
                           <option label="Choose a food package"></option>
                           <option value="1">Detox</option>
@@ -100,13 +103,15 @@ session_start(); // Start the session
                       <div class="form-wrap">
                         <input class="form-input" id="contact-phone" type="text" name="phone" data-constraints="@Numeric">
                         <label class="form-label" for="contact-phone">Phone</label>
+                        -->
                       </div>
+                     
                     </div>
-					
+				
 					<div class="col-12">
 					<div class="new">
-									<form>
-									<div class="form-group">
+		<!--							<form>
+				<div class="form-group">
 									  <input type="checkbox" id="Cheddar Cheese">
 									  <label for="Cheddar Cheese">Cheddar Cheese</label>
 									</div>
@@ -121,8 +126,11 @@ session_start(); // Start the session
        								  
 									</div>
 								  </form>
+								  -->
 								</div>
+								
 					</div>
+					
                     <div class="col-12">
                       <div class="form-wrap">
                         <label class="form-label" for="contact-message">Comment</label>
@@ -131,7 +139,7 @@ session_start(); // Start the session
                     </div>
 					
                     <div class="col-12">
-                      <button class="button button-primary" type="submit">order now</button>
+                      <button class="button button-primary" type="submit">Submit now</button>
                     </div>
                   </div>
                 </form>
@@ -259,8 +267,8 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" onclick="redirectToURL()">Order now!</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
+                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" onclick="redirectToURL()">View other recipes</a>
+                <div><a class="link-border" onclick="redirectsToURL()">click to download recipe (pdf)</a></div>
               </div>
             </div>
             <div class="col-xl-4 col-md-6">
@@ -274,8 +282,8 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">If you need daily balanced menu including breakfast &amp; dinner, then Balanced package is what you need!</p><a class="button button-primary" onclick="redirectToURL()">Order now</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
+                <p class="product-text">If you need daily balanced menu including breakfast &amp; dinner, then Balanced package is what you need!</p><a class="button button-primary" onclick="redirectToURL()">View other recipes</a>
+                <div><a class="link-border" onclick="redirectssToURL()">click to download recipe (pdf)</a></div>
               </div>
             </div>
             <div class="col-xl-4 col-md-6">
@@ -289,8 +297,8 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">Special menu developed for our vegan clients who appreciate healthy and plant-based food.</p><a class="button button-primary" onclick="redirectToURL()">Order now</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
+                <p class="product-text">Special menu developed for our vegan clients who appreciate healthy and plant-based food.</p><a class="button button-primary" onclick="redirectToURL()">View other recipes</a>
+                <div><a class="link-border" onclick="redirectsssToURL()">click to download recipe (pdf)</a></div>
               </div>
             </div>
           </div>
@@ -490,6 +498,7 @@ session_start(); // Start the session
     <script src="js/core.min.js"></script>
     <script src="js/script.js"></script>
     <!--coded by kraken-->
+    
      <script>
         // JavaScript function to handle the button click event
         function redirectToURL() {
@@ -500,6 +509,35 @@ session_start(); // Start the session
             window.location.href = targetURL;
         }
     </script>
+<script>
+        // JavaScript function to handle the button click event
+        function redirectsToURL() {
+            // Specify the URL you want to redirect to
+            var targetURL = "http://127.0.0.1:5000/recipe/1095732?search_query=detox"; // Replace with your desired URL
 
+            // Use window.location.href to navigate to the specified URL
+            window.location.href = targetURL;
+        }
+    </script>
+    <script>
+        // JavaScript function to handle the button click event
+        function redirectssToURL() {
+            // Specify the URL you want to redirect to
+            var targetURL = "http://127.0.0.1:5000/recipe/645514?search_query=salad"; // Replace with your desired URL
+
+            // Use window.location.href to navigate to the specified URL
+            window.location.href = targetURL;
+        }
+    </script>
+    <script>
+        // JavaScript function to handle the button click event
+        function redirectsssToURL() {
+            // Specify the URL you want to redirect to
+            var targetURL = "http://127.0.0.1:5000/recipe/1095892?search_query=vegan"; // Replace with your desired URL
+
+            // Use window.location.href to navigate to the specified URL
+            window.location.href = targetURL;
+        }
+    </script>
   </body>
 </html>
