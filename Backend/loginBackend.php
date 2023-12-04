@@ -14,7 +14,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 //	CONNECTING TO MAIN RABBIT NODE
 $connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
-if (!$regexConnection) {
+if (!$connection) {
 	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
 }
 
