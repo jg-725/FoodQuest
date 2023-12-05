@@ -62,10 +62,30 @@ if (isset($_SESSION['username']) && isset($_SESSION["user_id"])) {
         use PhpAmqpLib\Message\AMQPMessage;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $connectionSignup = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+		$connectionSignup = null;
+		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+
+		foreach ($rabbitNodes as $node) {
+			try {
+            			$connectionSignup = new AMQPStreamConnection(
+								$node,
+								5672,
+								'foodquest',
+								'rabbit123'
+				);
+				echo "SIGNUP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+				break;
+			} catch (Exception $e) {
+				continue;
+			}
+
+		}
 
             if (!$connectionSignup) {
-                die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+                die("SIGNUP CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
             }
 
             $username = $_POST['username_'];
@@ -110,8 +130,27 @@ if (isset($_SESSION['username']) && isset($_SESSION["user_id"])) {
             $channelSignup->close();
             $connectionSignup->close();
 
-            $connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
+		/*	RECEIVING DATABASE VALIDATION	*/
+
+                //      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+                $connectionReceiveDatabase = null;
+                $rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+
+                foreach ($rabbitNodes as $node) {
+			try {
+            			$connectionReceiveDatabase = new AMQPStreamConnection(
+									$node,
+									5672,
+									'foodquest',
+									'rabbit123'
+				);
+				echo "FRONTEND CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+				break;
+			} catch (Exception $e) {
+				continue;
+			}
             if (!$connectionReceiveDatabase) {
                 die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE");
             }
