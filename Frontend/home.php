@@ -160,10 +160,69 @@ if (!isset($_SESSION["username"]) && isset($_SESSION["user_id"])) {
 	// Server request POST initialized to trigger login request flow - IF statement
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+		$reviewConnection = null;
+		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
 
+		foreach ($rabbitNodes as $node) {
+    			try {
+        			$reviewConnection = new AMQPStreamConnection(
+							$node,
+							5672,
+							'foodquest',
+							'rabbit123'
+				);
+        			echo "FRONTEND HOMEPAGE CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+        			break;
+    			} catch (Exception $e) {
+        			continue;
+    			}
+		}
 
+		if (!$reviewConnection) {
+    			die("FRONTEND HOMEPAGE CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE");
+		}
 
+		//      ACTIVING MAIN CHANNEL TO SEND REQUESTS
+		$reviewChannel = $reviewConnection->channel();
 
+		//      DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
+		$reviewChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+
+        	$comment = $_POST[''];
+        	//$rating = $_POST['password'];
+
+		//	Routing key address so RabbitMQ knows where to send the message
+        	$sendToBackend = "backendReview";
+
+		//	ARRAY TO STORE USER REVIEW POST request
+        	$frontReview = array();
+                	if (empty($frontReview)) {    // Check if array is empty
+
+                    	$frontReview[''] = $comment;
+                    	//$frontReview[''] = $rating;
+        	}
+
+		//	Turning array into JSON for compatibility
+       		$encodedFrontReview = json_encode($frontReview);
+
+		//	Creating AMQPMessage protocol once login data is ready for delivery
+        	$reviewMsg = new AMQPMessage(
+        				$encodedFrontReview,
+                    			array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
+        	);
+
+		//	Publishing message to backend exchange using binding key indicating the receiver
+        	$reviewChannel->basic_publish($reviewMsg, 'frontend_exchange', $sendToBackend);
+
+		// Message that shows login workflow was triggered
+                echo ' [x] FRONTEND TASK: SENT USER FEEDBACK TO BACKEND', "\n";
+                print_r($frontReview);
+                echo "\n\n";
+
+		// Terminating sending channel and connection
+                $reviewChannel->close();
+                $reviewConnection->close();
 
 
 

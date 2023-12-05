@@ -8,6 +8,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 // SECTION TO RECEIVE MESSAGES FOR PROCESSING
 
+/*
 // CONNECTING TO MAIN RABBITMQ
 //$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 //$channelDB = $connectionDB->channel();
@@ -40,7 +41,7 @@ $callbackDB = function ($msg) use ($channelDB) {
     $validAddress = filter_var($backendMsg['address'], FILTER_SANITIZE_STRING);
     $validPhone = filter_var($backendMsg['phone'], FILTER_SANITIZE_STRING);
 
-
+/*
     // CHECKING IF NEW USER DATA EXISTS
     
         /* MYSQL CODE */
@@ -86,6 +87,7 @@ $callbackDB = function ($msg) use ($channelDB) {
        // $existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
        // $existsChannel = $existsConnection->channel();
 
+/*
         // EXCHANGE THAT WILL ROUTE DATABASE MESSAGES
         $existsChannel->exchange_declare('database_exchange', 'direct', false, false, false);
 
@@ -115,8 +117,10 @@ $callbackDB = function ($msg) use ($channelDB) {
         // CLOSING CHANNEL AND CONNECTION TALKING TO FRONTEND
         $existsChannel->close();
         $existsConnection->close();
-    
+
 };
+
+*/
 /*
 while (true) {
 	try {
