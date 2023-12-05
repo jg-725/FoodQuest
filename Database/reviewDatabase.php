@@ -67,20 +67,25 @@ $callback = function ($backendMsg) use ($channel) {
 
 	/*	ENTER MYSQL CODE HERE	*/
 
+	// Insert the user data into the database
+$sql = "INSERT INTO Results (Comment, Rating) VALUES ('$comment', '$rating')";
 
+if (mysqli_query($conn, $sql)) {
+    echo "New record created successfully";
+    $userExists = false;
+} else {
+    echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+}
 
+// Close the database connection
+mysqli_close($conn);
 
-
-
-
-
-
-
-
-
-
-
-
+$dbmessageBody = json_encode(
+    [
+        'userExists' => $userExists
+    ]
+);
+	
 	/*      END OF MYSQL CODE   */
 
 
