@@ -147,6 +147,32 @@ if (!isset($_SESSION["username"]) && isset($_SESSION["user_id"])) {
             </nav>
           </div>
         </header>
+
+
+	/*		RABBITMQ CODE TO SEND USER FEEDBACK TO BACKEND		*/
+	<?php
+
+
+	use PhpAmqpLib\Connection\AMQPStreamConnection;
+        use PhpAmqpLib\Message\AMQPMessage;
+
+
+	// Server request POST initialized to trigger login request flow - IF statement
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+
+
+
+
+
+
+
+	}
+	?>
+
+
+
+
         <!--Swiper-->
         <section class="section swiper-container swiper-slider bg-primary" data-autoplay="3500" data-loop="false" data-simulate-touch="false" data-effect="circle-bg" data-speed="750">
           <div class="swiper-bg-text">Food</div>

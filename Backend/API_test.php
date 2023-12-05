@@ -11,7 +11,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 $API_KEY = '886b4650b3eb4108a36e10a83da5be5d';
 $endpointPrefix = "https://api.spoonacular.com/recipes/";
 
-
+/*
 //      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
 $connection = null;
 $rabbitNodes = array('192.168.194.2', '192.168.194.1');
@@ -32,7 +32,7 @@ if (!$connection) {
 
 //      ACTIVING MAIN API CHANNEL TO PROCESS FRONTEND REQUESTS
 $channel = $connection->channel();
-
+*/
 //      DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
 $channel->exchange_declare('test_api_exchange', 'direct', false, false, false);
 
