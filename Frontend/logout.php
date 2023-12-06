@@ -9,8 +9,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["user_id"])) {
   exit();
 }
 ?>
-<!DOCTYPE html>
-?>
+
 <!DOCTYPE html>
 <html>
 <head>

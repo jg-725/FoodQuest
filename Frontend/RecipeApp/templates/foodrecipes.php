@@ -2,7 +2,13 @@
 <html class="wide wow-animation" lang="en">
 <head>
     <title>FoodQuest</title>
-     
+     <link rel="stylesheet" type="text/css" href="public/css/bootstrap.min.css" />
+	<link rel="stylesheet" type="text/css" href="public/css/main.css" />
+    
+     <link rel="stylesheet" type="text/css" href="js/css/style.css" />
+ <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <style>
         body {
             text-align: center;

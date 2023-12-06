@@ -127,7 +127,7 @@ session_start(); // Start the session
                     $decodedDBLogin = json_decode($msgContent->getBody(), true);
 
                     $userExists = $decodedDBLogin['userExists'];
-                    $userID = $decodedDBLogin['userID'];
+                   // $userID = $decodedDBLogin['userID'];
                     $dbUser = $decodedDBLogin['username'];
 
                     /* 2 IF statements: Checking if user exists */
@@ -135,13 +135,14 @@ session_start(); // Start the session
                     // Commands to be executed if username/password does not match
                     if ($userExists == 'FALSE') {
                         //echo "Username or password does not exist in the database";
-          echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
-                    echo "<script>location.href='login.php';</script>";
+          		echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
+          		
+                    	echo "<script>location.href='login.php';</script>";
                     }
 
                     // Commands to be executed if the user exists
                     else  {
-                        die(header("location:home.php"));
+                        die(header("Location: home.php"));
                     }
                 };
 

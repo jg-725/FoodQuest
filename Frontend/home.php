@@ -1,7 +1,6 @@
 <?php
 session_start(); // Start the session
 
-
 ?>
 
 
@@ -55,18 +54,17 @@ session_start(); // Start the session
                   </div>
                   <div class="rd-navbar-nav-wrap">
                     <ul class="rd-navbar-nav">
- <li class="rd-nav-item"><a class="rd-nav-link"> Welcome : <?php echo $_SESSION["username"]; ?> </a>
+ <li class="rd-nav-item"><a class="rd-nav-link"> Welcome : </a>
                       </li>                     
                      
-                    
-                    
   <li class="rd-nav-item"><a class="rd-nav-link" href="#about">About</a>
                       </li>
-                      <li class="rd-nav-item"><a class="rd-nav-link" href="#clients">Clients</a>                     
+                      <li class="rd-nav-item"><a class="rd-nav-link" href="#clients">Clients</a> </il>                    
                       
-                    </ul>
+                    
                      <li class="rd-nav-item"><a class="rd-nav-link" href="logout.php">Logout</a>
                       </li> 
+                      </ul>
                   </div>
                 </div>
               </div>
@@ -75,13 +73,16 @@ session_start(); // Start the session
               
             
               
-                <h3>Complete your order</h3>
+                <h3>Write your review about our service</h3>
                 <!--RD Mailform-->
                 <form class="rd-form rd-mailform" data-form-output="form-output-global" data-form-type="contact" method="POST" action="bat/rd-mailform.php">
                   <div class="row row-22">
                     <div class="col-12">
                       <div class="form-wrap">
+                      
+                      
                         <!-- Select 2-->
+                        <!--
                         <select class="form-input select" data-placeholder="Choose a food package" data-constraints="@Required">
                           <option label="Choose a food package"></option>
                           <option value="1">Detox</option>
@@ -100,13 +101,15 @@ session_start(); // Start the session
                       <div class="form-wrap">
                         <input class="form-input" id="contact-phone" type="text" name="phone" data-constraints="@Numeric">
                         <label class="form-label" for="contact-phone">Phone</label>
+                        -->
                       </div>
+                     
                     </div>
-					
+				
 					<div class="col-12">
 					<div class="new">
-									<form>
-									<div class="form-group">
+		<!--							<form>
+				<div class="form-group">
 									  <input type="checkbox" id="Cheddar Cheese">
 									  <label for="Cheddar Cheese">Cheddar Cheese</label>
 									</div>
@@ -121,8 +124,11 @@ session_start(); // Start the session
        								  
 									</div>
 								  </form>
+								  -->
 								</div>
+								
 					</div>
+					
                     <div class="col-12">
                       <div class="form-wrap">
                         <label class="form-label" for="contact-message">Comment</label>
@@ -131,7 +137,7 @@ session_start(); // Start the session
                     </div>
 					
                     <div class="col-12">
-                      <button class="button button-primary" type="submit">order now</button>
+                      <button class="button button-primary" type="submit">Submit now</button>
                     </div>
                   </div>
                 </form>
@@ -139,6 +145,91 @@ session_start(); // Start the session
             </nav>
           </div>
         </header>
+
+
+	/*		RABBITMQ CODE TO SEND USER FEEDBACK TO BACKEND		*/
+	<?php
+
+
+	use PhpAmqpLib\Connection\AMQPStreamConnection;
+        use PhpAmqpLib\Message\AMQPMessage;
+
+
+	// Server request POST initialized to trigger login request flow - IF statement
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+		$reviewConnection = null;
+		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+		foreach ($rabbitNodes as $node) {
+    			try {
+        			$reviewConnection = new AMQPStreamConnection(
+							$node,
+							5672,
+							'foodquest',
+							'rabbit123'
+				);
+        			echo "FRONTEND HOMEPAGE CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+        			break;
+    			} catch (Exception $e) {
+        			continue;
+    			}
+		}
+
+		if (!$reviewConnection) {
+    			die("FRONTEND HOMEPAGE CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE");
+		}
+
+		//      ACTIVING MAIN CHANNEL TO SEND REQUESTS
+		$reviewChannel = $reviewConnection->channel();
+
+		//      DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
+		$reviewChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+
+        	$comment = $_POST[''];
+        	//$rating = $_POST['password'];
+
+		//	Routing key address so RabbitMQ knows where to send the message
+        	$sendToBackend = "backendReview";
+
+		//	ARRAY TO STORE USER REVIEW POST request
+        	$frontReview = array();
+                	if (empty($frontReview)) {    // Check if array is empty
+
+                    	$frontReview[''] = $comment;
+                    	//$frontReview[''] = $rating;
+        	}
+
+		//	Turning array into JSON for compatibility
+       		$encodedFrontReview = json_encode($frontReview);
+
+		//	Creating AMQPMessage protocol once login data is ready for delivery
+        	$reviewMsg = new AMQPMessage(
+        				$encodedFrontReview,
+                    			array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
+        	);
+
+		//	Publishing message to backend exchange using binding key indicating the receiver
+        	$reviewChannel->basic_publish($reviewMsg, 'frontend_exchange', $sendToBackend);
+
+		// Message that shows login workflow was triggered
+                echo ' [x] FRONTEND TASK: SENT USER FEEDBACK TO BACKEND', "\n";
+                print_r($frontReview);
+                echo "\n\n";
+
+		// Terminating sending channel and connection
+                $reviewChannel->close();
+                $reviewConnection->close();
+
+
+
+	}
+	?>
+
+
+
+
         <!--Swiper-->
         <section class="section swiper-container swiper-slider bg-primary" data-autoplay="3500" data-loop="false" data-simulate-touch="false" data-effect="circle-bg" data-speed="750">
           <div class="swiper-bg-text">Food</div>
@@ -259,8 +350,8 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" onclick="redirectToURL()">Order now!</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
+                <p class="product-text">The best choice if you are looking for tasty &amp; light yet healthy food to start your day full of energy.</p><a class="button button-primary" onclick="redirectToURL()">View other recipes</a>
+                <div><a class="link-border" onclick="redirectsToURL()">click to download recipe (pdf)</a></div>
               </div>
             </div>
             <div class="col-xl-4 col-md-6">
@@ -274,8 +365,8 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">If you need daily balanced menu including breakfast &amp; dinner, then Balanced package is what you need!</p><a class="button button-primary" onclick="redirectToURL()">Order now</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
+                <p class="product-text">If you need daily balanced menu including breakfast &amp; dinner, then Balanced package is what you need!</p><a class="button button-primary" onclick="redirectToURL()">View other recipes</a>
+                <div><a class="link-border" onclick="redirectssToURL()">click to download recipe (pdf)</a></div>
               </div>
             </div>
             <div class="col-xl-4 col-md-6">
@@ -289,8 +380,8 @@ session_start(); // Start the session
                   </div>
                   <div class="product-price-footer">per day</div>
                 </div>
-                <p class="product-text">Special menu developed for our vegan clients who appreciate healthy and plant-based food.</p><a class="button button-primary" onclick="redirectToURL()">Order now</a>
-                <div><a class="link-border" href="#">open menu (pdf)</a></div>
+                <p class="product-text">Special menu developed for our vegan clients who appreciate healthy and plant-based food.</p><a class="button button-primary" onclick="redirectToURL()">View other recipes</a>
+                <div><a class="link-border" onclick="redirectsssToURL()">click to download recipe (pdf)</a></div>
               </div>
             </div>
           </div>
@@ -490,6 +581,7 @@ session_start(); // Start the session
     <script src="js/core.min.js"></script>
     <script src="js/script.js"></script>
     <!--coded by kraken-->
+    
      <script>
         // JavaScript function to handle the button click event
         function redirectToURL() {
@@ -500,6 +592,35 @@ session_start(); // Start the session
             window.location.href = targetURL;
         }
     </script>
+<script>
+        // JavaScript function to handle the button click event
+        function redirectsToURL() {
+            // Specify the URL you want to redirect to
+            var targetURL = "http://127.0.0.1:5000/recipe/1095732?search_query=detox"; // Replace with your desired URL
 
+            // Use window.location.href to navigate to the specified URL
+            window.location.href = targetURL;
+        }
+    </script>
+    <script>
+        // JavaScript function to handle the button click event
+        function redirectssToURL() {
+            // Specify the URL you want to redirect to
+            var targetURL = "http://127.0.0.1:5000/recipe/645514?search_query=salad"; // Replace with your desired URL
+
+            // Use window.location.href to navigate to the specified URL
+            window.location.href = targetURL;
+        }
+    </script>
+    <script>
+        // JavaScript function to handle the button click event
+        function redirectsssToURL() {
+            // Specify the URL you want to redirect to
+            var targetURL = "http://127.0.0.1:5000/recipe/1095892?search_query=vegan"; // Replace with your desired URL
+
+            // Use window.location.href to navigate to the specified URL
+            window.location.href = targetURL;
+        }
+    </script>
   </body>
 </html>
