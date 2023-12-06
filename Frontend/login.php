@@ -53,34 +53,15 @@ session_start(); // Start the session
             // Server request POST initialized to trigger login request flow - IF statement
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-
-
                 /*  	Sending/Publishing Section   	*/
 
-
-		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-		$senderConnection = null;
-		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
-
-		foreach ($rabbitNodes as $node) {
-			try {
-                		// Connecting to Main RabbitMQ Node IP
-                		$senderConnection = new AMQPStreamConnection(
-                    						$node,
-                    						5672,
-                    						'foodquest',
-                    						'rabbit123'
-                		);
-				echo "FRONTEND SENDING CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
-				break;
-			} catch (Exception $e) {
-				continue;
-			}
-		}
-
-		if (!$senderConnection) {
-    			die("CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ SERVER TO SEND LOGIN");
-		}
+                // Connecting to Main RabbitMQ Node IP
+                $senderConnection = new AMQPStreamConnection(
+                    '192.168.194.2',
+                    5672,
+                    'foodquest',
+                    'rabbit123'
+                );
 
                 $username = $_POST['username'];
                 $password = $_POST['password'];
@@ -122,35 +103,10 @@ session_start(); // Start the session
                 $senderChannel->close();
                 $senderConnection->close();
 
-
-
                 //  	--- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---
 
-                //      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-                $connectionReceiveDatabase = null;
-                $rabbitNodes = array('192.168.194.2', '192.168.194.1');
-
-		foreach ($rabbitNodes as $node) {
-    			try {
-        			$connectionReceiveDatabase = new AMQPStreamConnection(
-										$node,
-										5672,
-										'foodquest',
-										'rabbit123'
-				);
-				echo "FRONTEND CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
-        			break;
-    			} catch (Exception $e) {
-        			continue;
-    			}
-		}
-
-		if (!$connectionReceiveDatabase) {
-			die("FRONTEND CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ SERVER");
-		}
-
-                //    Connecting to ONE RabbitMQ NODE
-                //$connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+                //    Connecting to RabbitMQ
+                $connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
                 $channelReceiveDatabase = $connectionReceiveDatabase->channel();
 
@@ -174,13 +130,13 @@ session_start(); // Start the session
                     $userID = $decodedDBLogin['userID'];
                     $dbUser = $decodedDBLogin['username'];
 
-                    /* IF statement: Checking if user exists */
+                    /* 2 IF statements: Checking if user exists */
 
                     // Commands to be executed if username/password does not match
                     if ($userExists == 'FALSE') {
                         //echo "Username or password does not exist in the database";
-          		echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
-                    	echo "<script>location.href='login.php';</script>";
+          echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
+                    echo "<script>location.href='login.php';</script>";
                     }
 
                     // Commands to be executed if the user exists
