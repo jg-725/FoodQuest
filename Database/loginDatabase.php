@@ -36,8 +36,8 @@ $callback = function ($msg) use ($channel) {
 	print_r($loginData);
 
     //    GETTING VARIABLES SENT FROM BACKEND
-    $user = $validLoginRegex['username'];
-    $pass = $validLoginRegex['password'];
+    $user = $loginData['username'];
+    $pass = $loginData['password'];
 
 
     //  	JSON variables to String sanitize
