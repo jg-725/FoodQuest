@@ -7,12 +7,30 @@ require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
 
-//      TODO: LOOP THROUGH ARRAY TO SEND DATA TO WORKING NODE
+//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+$connection = null;
+$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+//      TODO: LOOP THROUGH ARRAY TO SEND DATA TO A WORKING NODE
+
+foreach ($rabbitNodes as $node) {
+	try {
+		$connection = new AMQPStreamConnection(
+						$node,
+						5672,
+						'foodquest',
+						'rabbit123'
+		);
+		echo "LOGIN BACKEND CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+		break;
+	} catch (Exception $e) {
+		continue;
+	}
+}
 
 //	CONNECTING TO MAIN RABBIT NODE
-$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
 if (!$connection) {
 	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
@@ -68,15 +86,27 @@ $callback = function ($loginData) use ($channel) {
 		//	ENCODING ARRAY INTO JSON FOR DELIVERY
 		$encodedArray = json_encode($arrayMsg);
 
-		//	CONNECTION TO MAIN RABBIT NODE
-		$backendLoginConnection = new AMQPStreamConnection('192.168.194.2',
-					5672,
-					'foodquest',
-					'rabbit123'
-		);
 
+		$backendLoginConnection = null;
+		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+		foreach ($rabbitNodes as $node) {
+			try {
+				//	CONNECTION TO RABBIT NODE
+				$backendLoginConnection = new AMQPStreamConnection(
+								$node,
+								5672,
+								'foodquest',
+								'rabbit123'
+				);
+				echo "BACKEND CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+				break;
+			} catch (Exception $e) {
+				continue;
+			}
+		}
 		if (!$backendLoginConnection) {
-        		die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+        		die("BACKEND CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
 		}
 
 		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE

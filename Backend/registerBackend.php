@@ -1,21 +1,41 @@
 <?php
 
 
-/*	TESTING: RECEIVING REGISTER MESSAGE FROM FRONTEND	*/
+/*	MILESTONE 4: RECEIVING REGISTER MESSAGE FROM FRONTEND	*/
 
 //	NECESSARY AMQP LIBRARIES FOR PHP
 require_once __DIR__ .'/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
+
+//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+$connection = null;
+$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+
+foreach ($rabbitNodes as $node) {
+	try {
+        	$connection = new AMQPStreamConnection(
+						$node,
+						5672,
+						'foodquest',
+						'rabbit123'
+		);
+		echo "BACKEND SIGNUP CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+		break;
+	} catch (Exception $e) {
+		continue;
+	}
+}
+
 
 
 //	CONNECTING TO MAIN RABBIT NODE
-$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
 if (!$connection) {
-	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+	die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 }
 
 //	ACTIVING MAIN CHANNEL FOR FRONTEND CONNECTION
@@ -97,15 +117,33 @@ $callback = function ($userData) use ($channel) {
 		$sendRegister = json_encode($consumeRegister);
 
 
-		//	CONNECTION TO MAIN RABBIT NODE
-		$passwordConnection = new AMQPStreamConnection('192.168.194.2',
-					5672,
-					'foodquest',
-					'rabbit123'
-		);
+		/*	PROCESS TO CONNECT TO RABBITMQ		*/
+
+		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+		$passwordConnection = null;
+		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+		foreach ($rabbitNodes as $node) {
+			try {
+            			$passwordConnection = new AMQPStreamConnection(
+								$node,
+								5672,
+								'foodquest',
+								'rabbit123'
+				);
+				echo "BACKEND PASSWORD CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+				break;
+			} catch (Exception $e) {
+				continue;
+			}
+
+		}
+
+		//	CONNECTION TO MAIN RABBIT NODE - PRE CLUSTER
+		//$passwordConnection = new AMQPStreamConnection('192.168.194.2',5672,'foodquest','rabbit123');
 
 		if (!$passwordConnection) {
-        		die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
+        		die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 		}
 
 
