@@ -1,15 +1,40 @@
 <?php
 
-/* TESTING: RECEIVING VALID REGEX REGISTER INPUT FROM BACKEND */
+/*	MILESTONE 4: RECEIVING HASHED PASSWORD INPUT FROM BACKEND WITH RABBITMQ CLUSTER */
 
 require_once __DIR__ . '/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-// SECTION TO RECEIVE MESSAGES FOR PROCESSING
+//	-- SECTION TO RECEIVE MESSAGES FOR PROCESSING --
+
+//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+$connectionDB = null;
+$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+foreach ($rabbitNodes as $node) {
+	try {
+        	$connectionDB = new AMQPStreamConnection(
+							$node,
+							5672,
+							'foodquest',
+							'rabbit123'
+		);
+		echo "SIGNUP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+		break;
+	} catch (Exception $e) {
+		echo "ERROR: RABBITMQ CONNECTION WAS UNSUCCESSFUL @ $node\n";
+		continue;
+	}
+}
+
+if (!$connectionDB) {
+	die("RABBITMQ CONNECTION ERROR: DATABASE COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
+}
 
 // CONNECTING TO MAIN RABBITMQ
-$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
 $channelDB = $connectionDB->channel();
 
 $channelDB->exchange_declare('backend_exchange', 'direct', false, false, false);
@@ -27,7 +52,7 @@ $channelDB->queue_bind('database_mailbox', 'backend_exchange', $bindingKeyDB);
 echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 
 $callbackDB = function ($msg) use ($channelDB) {
-	echo '[+] RECEIVED HASHED PASSWORD FROM BACKEND', "\n", $msg->getBody(), "\n\n";
+	echo '[+] RECEIVED HASHED PASSWORD FROM BACKEND', "\n\n";
 
     	$backendMsg = json_decode($msg->getBody(), true);
 
@@ -63,86 +88,104 @@ $callbackDB = function ($msg) use ($channelDB) {
     $stringPhone = filter_var($validPhone, FILTER_SANITIZE_STRING);
 
 
-    /*	SIGNUP REGEX CHECK	*/
+    	/*	SIGNUP REGEX CHECK	*/
 
+	$checkValues = array();
 
-    // USERNAME REGEX
-    $regexUser = preg_match('/^[a-zA-Z0-9_]+$/', $stringUser);
+    	// USERNAME REGEX
+    	$regexUser = preg_match('/^[a-zA-Z0-9_]+$/', $stringUser);
 	//	USERNAME REGEX
 	if (preg_match('/^[a-zA-Z0-9_]+$/', $stringUser)) {
 		echo "VALID USERNAME";
+		$checkValues['user'] = 'VALID USERNAME';
 	}
 	else {
 		echo "WRONG USERNAME";
+		$checkValues['user'] = 'WRONG USERNAME';
 	}
 
-    // PASSWORD REGEX
-    $strong_password = "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/";
-    $regexPass = preg_match($strong_password, $stringPass);
+    	// PASSWORD REGEX
+    	$strong_password = "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/";
+    	$regexPass = preg_match($strong_password, $stringPass);
         if (preg_match($strong_password, $stringPass)) {
                 echo "VALID PASSWORD";
+		$checkValues['pass'] = 'VALID PASSWORD';
         }
         else {
                 echo "WRONG PASSWORD";
+		$checkValues['pass'] = 'WRONG PASSWORD';
         }
 
-    // FIRST NAME REGEX
-    $regexFirst = preg_match('/^[a-zA-Z]+$/', $stringFirst);
+    	// FIRST NAME REGEX
+    	$regexFirst = preg_match('/^[a-zA-Z]+$/', $stringFirst);
 
         if (preg_match('/^[a-zA-Z]+$/', $stringFirst)) {
                 echo "VALID FIRST NAME";
+		$checkValues['first'] = 'VALID FIRST NAME';
         }
         else {
                 echo "WRONG FIRST NAME";
+		$checkValues['first'] = 'WRONG FIRST NAME';
         }
 
-    // LAST NAME REGEX
-    $regexLast = preg_match('/^[a-zA-Z]+$/', $stringLast);
+    	// LAST NAME REGEX
+    	$regexLast = preg_match('/^[a-zA-Z]+$/', $stringLast);
 
         if (preg_match('/^[a-zA-Z]+$/', $stringLast)) {
                 echo "VALID LAST NAME";
+		$checkValues['last'] = 'VALID LAST NAME';
         }
         else {
                 echo "WRONG LAST NAME";
+		$checkValues['last'] = 'WRONG LAST NAME';
         }
 
-    //  	EMAIL REGEX
-    $strong_email = "/^[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/";
-    //$simple_email = '/^\\S+@\\S+\\.\\S+$/';
-    $regexEmail = preg_match($strong_email, $stringEmail);
+    	//  	EMAIL REGEX
+    	$strong_email = "/^[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/";
+    	$regexEmail = preg_match($strong_email, $stringEmail);
 
         if (preg_match($strong_email, $stringEmail)) {
                 echo "VALID EMAIL";
+		$checkValues['email'] = 'VALID EMAIL';
         }
         else {
                 echo "WRONG EMAIL";
+		$checkValues['email'] = 'WRONG EMAIL';
         }
 
 
-    // SIMPLE ADDRESS REGEX
-    $valid_address_regex = "/^(\\d{1,}) [a-zA-Z0-9\\s]+(\\,)? [a-zA-Z]+(\\,)? [A-Z]{2} [0-9]{5,6}$/";
-    $regexAddress = preg_match($valid_address_regex, $stringAddress);
+    	// SIMPLE ADDRESS REGEX
+    	$valid_address_regex = "/^(\\d{1,}) [a-zA-Z0-9\\s]+(\\,)? [a-zA-Z]+(\\,)? [A-Z]{2} [0-9]{5,6}$/";
+    	$regexAddress = preg_match($valid_address_regex, $stringAddress);
 
         if (preg_match($valid_address_regex, $stringAddress)) {
                 echo "VALID ADDRESS";
+		$checkValues['address'] = 'VALID ADDRESS';
         }
         else {
                 echo "WRONG ADDRESS";
+		$checkValues['address'] = 'WRONG ADDRESS';
         }
 
-    // PHONE REGEX
-    $valid_phone_regex = "/^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$/";
-    $regexPhone = preg_match($valid_phone_regex, $stringPhone);
+    	// PHONE REGEX
+    	$valid_phone_regex = "/^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$/";
+    	$regexPhone = preg_match($valid_phone_regex, $stringPhone);
 
         if (preg_match($valid_phone_regex, $stringPhone)) {
                 echo "VALID PHONE NUMBER";
+		$checkValues['phone'] = 'VALID PHONE NUMBER';
         }
         else {
                 echo "WRONG PHONE NUMBER";
+		$checkValues['phone'] = 'WRONG PHONE NUMBER';
         }
 
-    // CHECKING IF NEW USER DATA EXISTS IFnumber1
-    if ($regexUser == TRUE && $regexPass == TRUE && $regexFirst == TRUE && $regexLast == TRUE && $regexEmail == TRUE && $regexAddress == TRUE && $regexPhone == TRUE) {
+	//	PRINTING CONDITION OF VALUES
+	print_r($checkValues);
+
+
+    	// CHECKING IF NEW USER DATA EXISTS
+    	if ($regexUser == TRUE && $regexPass == TRUE && $regexFirst == TRUE && $regexLast == TRUE && $regexEmail == TRUE && $regexAddress == TRUE && $regexPhone == TRUE) {
 
         /* MYSQL CODE */
 
@@ -175,15 +218,7 @@ $callbackDB = function ($msg) use ($channelDB) {
             	//	INSERTING NEW USER INTO FOODQUEST DATABASE
             	$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonumber) VALUES ('$validUser', '$validPass', '$validFirst', '$validLast', '$validEmail', '$validAddress', '$validPhone')";
 
-
-   	/*$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhone')";
-
-*/
-
-
-
-
-
+   	//$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhone')";
             	if (mysqli_query($conn, $sql)) {
                 	echo "[+] NEW USER WAS SUCCESSFULLY REGISTERED INTO FOODQUEST DATABASE [+]\n";
                 	$newUser = 'FALSE';
@@ -196,10 +231,31 @@ $callbackDB = function ($msg) use ($channelDB) {
         // Close the database connection
         mysqli_close($conn);
 
+
         /* PROCESS TO SEND USER EXISTS MESSAGE TO FRONTEND - RABBITMQ */
 
+	//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+	$existsConnection = null;
+	$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+	foreach ($rabbitNodes as $node) {
+		try {
+            		$existsConnection = new AMQPStreamConnection(
+								$node,
+								5672,
+								'foodquest',
+								'rabbit123'
+			);
+			echo "SIGNUP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+			break;
+		} catch (Exception $e) {
+			echo "ERROR: RABBITMQ CONNECTION WAS UNSUCCESSFUL @ $node\n";
+			continue;
+		}
+	}
+
         // ESTABLISHING CONNECTION
-        $existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+        //$existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
         if (!$existsConnection) {
                 die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
@@ -238,13 +294,29 @@ $callbackDB = function ($msg) use ($channelDB) {
         $existsConnection->close();
     }
 
-    // SENDING REGEX ERROR MESSAGE TO FRONTEND ifnumber2
+    // SENDING REGEX ERROR MESSAGE TO FRONTEND
     else  {
 
-	//$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
+	$regexConnection = null;
+	$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
 
 	//	TODO: LOOP THROUGH ARRAY TO SEND DATA TO WORKING NODE
 
+	foreach ($rabbitNodes as $node) {
+                try {
+                        $regexConnection = new AMQPStreamConnection(
+                                                                $node,
+                                                                5672,
+                                                                'foodquest',
+                                                                'rabbit123'
+                        );
+                        echo "SIGNUP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+                        break;
+                } catch (Exception $e) {
+                        echo "ERROR: RABBITMQ CONNECTION WAS UNSUCCESSFUL @ $node\n";
+                        continue;
+                }
+        }
 
         // Process to send message back to FRONTEND
         $regexConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
@@ -283,12 +355,6 @@ $callbackDB = function ($msg) use ($channelDB) {
         $regexChannel->close();
         $regexConnection->close();
     }
-
-
-	/*	IF STATEMENT TO CHECK FOR MYSQL FOR ALL VALID REGEX SIGNUP	*/
-
-    
-
 };
 
 while (true) {

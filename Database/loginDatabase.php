@@ -1,34 +1,62 @@
 <?php
 
-/* TESTING: RECEIVING LOGIN MESSAGES FROM BACKEND */
+/*	MILESTONE 4: RECEIVING LOGIN MESSAGES FROM BACKEND WITH CLUSTER	*/
+
 
 require_once __DIR__ . '/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
+
 // MAIN SECTION TO RECEIVE VALID REGEX MESSAGES FROM BACKEND
 
+//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+$mainConnection = null;
+$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+foreach ($rabbitNodes as $node) {
+	try {
+        	$mainConnection = new AMQPStreamConnection(
+						$node,
+						5672,
+						'foodquest',
+						'rabbit123'
+		);
+		echo "LOGIN DATABASE CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+		break;
+	} catch (Exception $e) {
+		echo "CONNECTION ERROR: RABBITMQ CLUSTER LINK WAS UNSUCCESSFUL @ $node\n";
+		continue;
+	}
+}
+
+if (!$mainConnection) {
+	die("CONNECTION ERROR: DATABASE COULD NOT CONNECT TO ANY RABBITMQ NODE.");
+}
+
+
 // CONNECTING TO MAIN RABBITMQ
-$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-$channel = $connection->channel();
+//$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+$mainChannel = $mainConnection->channel();
 
 // EXCHANGE THAT MESSAGES WILL COME FROM
-$channel->exchange_declare('backend_exchange', 'direct', false, false, false);
+$mainChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
 
 // Using DURABLE QUEUES FOR DELIVERY: Third parameter is TRUE
-$channel->queue_declare('database_mailbox', false, true, false, false);
+$mainChannel->queue_declare('database_mailbox', false, true, false, false);
 
 // Binding key
 $loginDB = "database";
 
 // Binding three items together to receive msgs
-$channel->queue_bind('database_mailbox', 'backend_exchange', $loginDB);
+$mainChannel->queue_bind('database_mailbox', 'backend_exchange', $loginDB);
 
 // Terminal message to signal we are waiting for messages from BACKEND
 echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 
 // CALLBACK RESPONSIBLE FOR PROCESSING INCOMING MESSAGES
-$callback = function ($msg) use ($channel) {
+$callback = function ($msg) use ($mainChannel) {
     echo '[+] RECEIVED LOGIN FROM BACKEND', "\n", $msg->getBody(), "\n\n";
 
     $loginData = json_decode($msg->getBody(), true);
@@ -54,7 +82,7 @@ $callback = function ($msg) use ($channel) {
 
     // Check if the connection is successful
     if (!$conn) {
-        die("[X] CONNECTION TO MYSQL SERVER FAILED [X]" . mysqli_connect_error());
+        die("[X] CONNECTION TO MYSQL SERVER FAILED [X]\n" . mysqli_connect_error());
     }
 
     // Check if the user exists in the database
@@ -67,11 +95,12 @@ $callback = function ($msg) use ($channel) {
         $row = mysqli_fetch_assoc($result);
 
 	echo " [+] ENTERED USER MATCHES WITH DATABASE DATA.\n";
+
         $userExists = 'TRUE';
-        //$id = $row['id'];
+        $id = $row['id'];
         $username = $row['username'];
     } else {
-        //	COMMAND LINE MESSAGE THAT USER EXISTS
+        //	COMMAND LINE MESSAGE THAT ENTERED USERNAME DOESN'T MATCH A CURRENT USER
 	echo " [-] ENTERED LOGIN DOES NOT MATCH WITH ANY USER IN DATABASE.\n";
         $userExists = 'FALSE';
     }
@@ -79,20 +108,50 @@ $callback = function ($msg) use ($channel) {
     // Close the database connection
     mysqli_close($conn);
 
-    /* GETTING RETURN ARRAY TO SEND TO FRONTEND - RABBITMQ */
 
-    $existsMsg = [
-        'user_exists' => $userExists,
-        'username' => $username,
-    ];
+    	/* GETTING RETURN ARRAY TO SEND TO FRONTEND - RABBITMQ */
 
-    // GETTING MYSQL MESSAGE READY FOR DELIVERY TO FRONTEND
-    $encodedExistsMsg = json_encode($existsMsg);
+    	$existsMsg = [
+        	'user_exists' => $userExists,
+        	'username' => $username,
+		'user_id' => $id,
+    	];
 
-    /* SENDING USER EXISTS MESSAGE TO FRONTEND */
+    	// GETTING MYSQL MESSAGE READY FOR DELIVERY TO FRONTEND
+    	$encodedExistsMsg = json_encode($existsMsg);
 
-    $existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-    $existsChannel = $existsConnection->channel();
+
+    	/* SENDING USER EXISTS MESSAGE TO FRONTEND */
+
+	//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+	$existsConnection = null;
+	$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+
+	foreach ($rabbitNodes as $node) {
+        	try {
+                	$existsConnection = new AMQPStreamConnection(
+                                                $node,
+                                                5672,
+                                                'foodquest',
+                                                'rabbit123'
+                	);
+                	echo "LOGIN DATABASE CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+                	break;
+        	} catch (Exception $e) {
+			echo "CONNECTION TO RABBITMQ CLUSTER WAS UNSUCCESSFUL @ $node\n";
+                	continue;
+        	}
+	}
+
+	if (!$existsConnection) {
+        	die("CONNECTION ERROR: DATABASE COULD NOT CONNECT TO ANY RABBITMQ NODE.");
+	}
+
+    	//$existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+    	$existsChannel = $existsConnection->channel();
+
 
     // EXCHANGE THAT WILL ROUTE MESSAGES TO FRONTEND
     $existsChannel->exchange_declare('database_exchange', 'direct', false, false, false);
@@ -102,15 +161,15 @@ $callback = function ($msg) use ($channel) {
 
     // Getting message ready for delivery
     $existsMessage = new AMQPMessage(
-        $encodedExistsMsg,
-        array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
+    				$encodedExistsMsg,
+        			array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
     );
 
     // Publishing message to exchange via routing key
     $existsChannel->basic_publish($existsMessage, 'database_exchange', $exists_key);
 
     // COMMAND LINE MESSAGE
-    echo '[@] MYSQL LOGIN CHECK PROTOCOL EXECUTED [@]', "\nRETURN MESSAGE TO FRONTEND\n";
+    echo '[@] MYSQL LOGIN CHECK PROTOCOL EXECUTED [@]\n', "\nRETURN MESSAGE TO FRONTEND\n";
 
     print_r($existsMsg); // Displaying array on the command line
 
@@ -121,11 +180,11 @@ $callback = function ($msg) use ($channel) {
 //	KEEPING THE QUEUES AND EXCHANGES LOOKING FOR INCOMING MESSAGES
 while (true) {
 	try {
-    		$channel->basic_qos(null, 1, false);
-    		$channel->basic_consume('database_mailbox', '', false, true, false, false, $callback);
+    		$mainChannel->basic_qos(null, 1, false);
+    		$mainChannel->basic_consume('database_mailbox', '', false, true, false, false, $callback);
 
-    		while (count($channel->callbacks)) {
-        		$channel->wait();
+    		while (count($mainChannel->callbacks)) {
+        		$mainChannel->wait();
         		echo 'NO MORE LOGIN MESSAGES FROM BACKEND', "\n\n";
         		break;
     		}
@@ -135,8 +194,8 @@ while (true) {
 	}
 }
 // CLOSING MAIN CHANNEL AND CONNECTION
-$channel->close();
-$connection->close();
+$mainChannel->close();
+$mainConnection->close();
 
 ?>
 
