@@ -6,7 +6,7 @@ from urllib.parse import unquote
 app = Flask(__name__)
 
 # Replace with your Spoonacular API key
-API_KEY = '886b4650b3eb4108a36e10a83da5be5d'
+API_KEY = '2c68ff7aeba0407492aa18e8321ca6cc'
 
 # Define the route for the "Home" button
 @app.route('/home', methods=['GET'])
@@ -72,7 +72,7 @@ def view_recipe(recipe_id):
     # If the API call is successful
     if response.status_code == 200:
         recipe = response.json()
-        return render_template('view_recipe.html', recipe=recipe, search_query=search_query)
+        return render_template('view_recipe.php', recipe=recipe, search_query=search_query)
     return "Recipe not found", 404
 
 # Run the app in debug mode if executed directly

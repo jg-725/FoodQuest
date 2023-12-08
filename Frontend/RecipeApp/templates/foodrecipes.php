@@ -87,7 +87,9 @@
     <form method="POST" action="/">
         <input type="text" name="search_query" placeholder="Search for recipes">
         <input type="submit" value="Search">
-        <a href="/home" class="home-button">Home</a>
+         <a href="http://127.0.0.1:7007/FrontEnd/home.php" class="home-button">Home </a>
+        <a href="/home" class="home-button"></a>
+       
     </form>
 
     <!-- Check of recipes are available-->

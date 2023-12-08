@@ -182,7 +182,7 @@ session_start();
                 if ($regexUser == 'TRUE') {
                     if ($newUser == 'FALSE') {
                         echo "\n[Successfully Registered!]\n";
-                        header("Location: login.php");
+                        header("Location: successReg.php");
                         // Ensure that no further output is sent
                         //exit();
                     } else {

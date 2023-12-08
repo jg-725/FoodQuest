@@ -66,7 +66,41 @@
 <body>
 
 
+      <div id="content">
+    <h1>Your Content Goes Here</h1>
+    <p>This is a sample webpage that allows users to print or save as PDF.</p>
+    <!-- Add your content here -->
+</div>
 
+<button id="pdfBtn">Print or Save as PDF</button>
+
+<script>
+    document.getElementById('pdfBtn').addEventListener('click', function () {
+        // Get the content from the #content element
+        var content = document.getElementById('content').innerHTML;
+
+        // Make a POST request to the API endpoint
+        fetch('https://127.0.0.1:5000/recipe/645514?search_query=salad/templates/generate_pdf.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `content=${encodeURIComponent(content)}`,
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            // Create a download link and trigger the click event
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'output.pdf';
+            link.click();
+        })
+        .catch(error => console.error('Error:', error));
+    });
+</script>
+
+        
+        
 
 
 
@@ -104,14 +138,15 @@
         </ol>
         <a href="/?search_query={{ search_query }}">Back to search results</a>
         
+ 
+        
+        
+        
+        
+        
+        
         
   
-
-      
-        
-        
-        
-        
     </div>
 </body>
 </html>

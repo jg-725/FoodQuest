@@ -68,3 +68,46 @@
       </div>
    </div>
 </div>
+
+<?php
+// Add your database connection code here if needed
+// Required PHP and AMQP Libraries to interact with RabbitMQ
+            require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
+            use PhpAmqpLib\Connection\AMQPStreamConnection;
+            use PhpAmqpLib\Message\AMQPMessage;
+
+
+
+if ($_SERVER["REQUEST_METHOD"] == 'POST') {
+    $email = filter_var($_POST["email"], FILTER_SANITIZE_EMAIL);
+
+    // Validate the email address (you might want to add more robust validation)
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "Invalid email address";
+        exit;
+    }
+
+    // Generate a unique token (you might want to use a library for this)
+    $token = bin2hex(random_bytes(32));
+
+    // Store the token in your database along with the user's email
+    // Add your database update code here if needed
+
+    // Send a password reset email to the user
+    $resetLink = "https://yourwebsite.com/reset_password.php?email=$email&token=$token";
+    $subject = "Password Reset";
+    $message = "Click the following link to reset your password:\n\n$resetLink";
+    $headers = "From: your-email@example.com"; // Change this to your email
+
+    // Uncomment the following line when you're ready to send emails
+    // mail($email, $subject, $message, $headers);
+
+    echo "Password reset instructions have been sent to your email.";
+}
+?>
+
+
+
+
+
+

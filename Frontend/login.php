@@ -1,5 +1,13 @@
 <?php
 session_start(); // Start the session
+
+// Checks if the user is logged in. If they are, redirect them to the home page as register.php should not be accessable to logged in users.
+if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
+  header("Location: home.php");
+  exit();
+}
+
+
 ?>
 
 <!DOCTYPE html>
@@ -127,14 +135,15 @@ session_start(); // Start the session
                     $decodedDBLogin = json_decode($msgContent->getBody(), true);
 
                     $userExists = $decodedDBLogin['userExists'];
-                   // $userID = $decodedDBLogin['userID'];
+                    $userID = $decodedDBLogin['userID'];
                     $dbUser = $decodedDBLogin['username'];
+                   
 
                     /* 2 IF statements: Checking if user exists */
 
                     // Commands to be executed if username/password does not match
                     if ($userExists == 'FALSE') {
-                        //echo "Username or password does not exist in the database";
+                        echo "Username or password does not exist in the database";
           		echo "<script>alert('USER DOES NOT EXIST IN DATABASE');</script>";
           		
                     	echo "<script>location.href='login.php';</script>";
@@ -142,7 +151,12 @@ session_start(); // Start the session
 
                     // Commands to be executed if the user exists
                     else  {
-                        die(header("Location: home.php"));
+                        
+                         $_SESSION['userID']= $userID;
+                         $_SESSION['username']= $dbUser;
+                         die(header("Location: home.php"));
+                         
+                          //echo $dbUser;
                     }
                 };
 

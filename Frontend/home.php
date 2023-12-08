@@ -1,6 +1,12 @@
 <?php
 session_start(); // Start the session
 
+// Checks if the user is logged in. If they are, redirect them to the home page as register.php should not be accessable to logged in users.
+if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
+  die(header("Location: login.php")); // Redirect to login page if user is not logged in
+}
+
+
 ?>
 
 
@@ -49,12 +55,12 @@ session_start(); // Start the session
                     <button class="rd-navbar-toggle" data-rd-navbar-toggle=".rd-navbar-nav-wrap"><span></span></button>
                     <!--RD Navbar Brand-->
                     <div class="rd-navbar-brand">
-                      <!--Brand--><a class="brand" href="home.php"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
+                      <!--Brand--><a class="brand" href="index.php"><img class="brand-logo-dark" src="images/logo-default-363x100.png" alt="" width="181" height="50"/><img class="brand-logo-light" src="images/logo-inverse-363x100.png" alt="" width="181" height="50"/></a>
                     </div>
                   </div>
                   <div class="rd-navbar-nav-wrap">
                     <ul class="rd-navbar-nav">
- <li class="rd-nav-item"><a class="rd-nav-link"> Welcome : </a>
+ <li class="rd-nav-item"><a class="rd-nav-link"> Welcome : <?php echo $_SESSION["username"]; ?> </a>
                       </li>                     
                      
   <li class="rd-nav-item"><a class="rd-nav-link" href="#about">About</a>
@@ -147,9 +153,9 @@ session_start(); // Start the session
         </header>
 
 
-	/*		RABBITMQ CODE TO SEND USER FEEDBACK TO BACKEND		*/
+	
 	<?php
-
+/*		RABBITMQ CODE TO SEND USER FEEDBACK TO BACKEND		*/
 
 	use PhpAmqpLib\Connection\AMQPStreamConnection;
         use PhpAmqpLib\Message\AMQPMessage;
@@ -323,7 +329,7 @@ session_start(); // Start the session
                 <ul class="list-marked">
                   <li>Choose gluten-free meals from our menu</li>
                   <li>The freshest ingredients for every dish</li>
-                  <li>Get great discounts when ordering for 2+ people</li>
+                  <li>Get varity of ingreadients from our menu</li>
                 </ul><a class="button button-primary" href="#">read more</a>
               </div>
             </div>
@@ -336,7 +342,7 @@ session_start(); // Start the session
         <div class="container">
           <div class="text-center">
             <h3>What we Offer</h3>
-            <h2>Food packages</h2>
+            <h2>Free ingreadient to download</h2>
           </div>
           <div class="row row-50 justify-content-center">
             <div class="col-xl-4 col-md-6">
