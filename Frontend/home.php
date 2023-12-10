@@ -1,12 +1,13 @@
 <?php
 session_start(); // Start the session
 
+/*
 // Checks if the user is logged in. If they are, redirect them to the home page as register.php should not be accessable to logged in users.
 if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
   die(header("Location: login.php")); // Redirect to login page if user is not logged in
 }
 
-
+*/
 ?>
 
 
@@ -15,7 +16,7 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
   <head>
     <title>Home</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, height=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="icon" href="images/favicon.png" type="image/x-icon">
 	
@@ -23,8 +24,16 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
     <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/fonts.css">
     <link rel="stylesheet" href="css/style.css">
+     <link rel="stylesheet" type="text/css" href="css/style2.css">
     <style>.ie-panel{display: none;background: #212121;padding: 10px 0;box-shadow: 3px 3px 5px 0 rgba(0,0,0,.3);clear: both;text-align:center;position: relative;z-index: 1;} html.ie-10 .ie-panel, html.lt-ie-10 .ie-panel {display: block;}
     </style>
+    <style>
+        .uppercase-text {
+            text-transform: uppercase;
+        }
+    </style>
+
+    
   </head>
   <body>
 			
@@ -60,7 +69,7 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
                   </div>
                   <div class="rd-navbar-nav-wrap">
                     <ul class="rd-navbar-nav">
- <li class="rd-nav-item"><a class="rd-nav-link"> Welcome : <?php echo $_SESSION["username"]; ?> </a>
+ <li class="rd-nav-item"><a class="rd-nav-link">Welcome : &nbsp; <p class="uppercase-text"> <?php echo  $_SESSION["username"]; ?> </p> </a>
                       </li>                     
                      
   <li class="rd-nav-item"><a class="rd-nav-link" href="#about">About</a>
@@ -80,11 +89,31 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
             
               
                 <h3>Write your review about our service</h3>
+                
+
                 <!--RD Mailform-->
                 <form class="rd-form rd-mailform" data-form-output="form-output-global" data-form-type="contact" method="POST" action="bat/rd-mailform.php">
+                 
                   <div class="row row-22">
+                
+                 <div class="rate">
+                  <h3>Rating</h3>
+    <input type="radio" id="star5" name="rate" value="5" />
+    <label for="star5" title="text">5 stars</label>
+    <input type="radio" id="star4" name="rate" value="4" />
+    <label for="star4" title="text">4 stars</label>
+    <input type="radio" id="star3" name="rate" value="3" />
+    <label for="star3" title="text">3 stars</label>
+    <input type="radio" id="star2" name="rate" value="2" />
+    <label for="star2" title="text">2 stars</label>
+    <input type="radio" id="star1" name="rate" value="1" />
+    <label for="star1" title="text">1 star</label>
+  </div>
+ 
+                 
                     <div class="col-12">
                       <div class="form-wrap">
+                       
                       
                       
                         <!-- Select 2-->
@@ -136,7 +165,11 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
 					</div>
 					
                     <div class="col-12">
+                    
+                   
                       <div class="form-wrap">
+                      
+                      
                         <label class="form-label" for="contact-message">Comment</label>
                         <textarea class="form-input" id="contact-message" name="message" data-constraints="@Required"></textarea>
                       </div>
