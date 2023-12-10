@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <title>{{ recipe.title }}</title>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             text-align: center;
@@ -50,29 +51,63 @@
             padding: 20px;
         }
 
-        #printBtn {
-            display: block;
-            margin: 20px 0;
+       .print-btn, .save-pdf-btn {
             padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
             background-color: #4CAF50;
             color: white;
-            text-align: center;
-            text-decoration: none;
-            font-size: 16px;
-            cursor: pointer;
+            border: none;
+            border-radius: 4px;
 
     </style>
 </head>
 <body>
+<script src="https://rawgit.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.js"></script>
+        
+  
+   <h1> <p>FoodQuest Recipes</p></h1>
 
+    <!-- Print Button -->
+    <button class="print-btn" onclick="printPage()">Print or Save as PDF</button>
+   
+    <!-- Save as PDF Button -->
+    <!--
+    <button class="save-pdf-btn" onclick="saveAsPDF()">Save as PDF</button>
+     -->
+    <script>
+        // Function to open the browser's print dialog
+        function printPage() {
+            window.print();
+        }
 
-      <div id="content">
-    <h1>Your Content Goes Here</h1>
-    <p>This is a sample webpage that allows users to print or save as PDF.</p>
-    <!-- Add your content here -->
-</div>
+        // Function to save the webpage as a PDF
+        function saveAsPDF() {
+            // Get the HTML content to be converted to PDF
+            var content = document.body;
 
-<button id="pdfBtn">Print or Save as PDF</button>
+            // Configure the PDF options
+            var options = {
+                margin: 10,
+                filename: 'saved_document.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 }
+            };
+
+            // Generate the PDF
+            html2pdf().from(content).set(options).outputPdf().then(function(pdf) {
+                // Download the generated PDF
+                var blob = new Blob([pdf], { type: 'application/pdf' });
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = 'saved_document.pdf';
+                link.click();
+            });
+        }
+    </script>      
+        
+        
+
 
 <script>
     document.getElementById('pdfBtn').addEventListener('click', function () {
@@ -139,10 +174,6 @@
         <a href="/?search_query={{ search_query }}">Back to search results</a>
         
  
-        
-        
-        
-        
         
         
         

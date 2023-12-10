@@ -20,9 +20,14 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
     <link rel="stylesheet" type="text/css" href="js/css/style.css" />
     <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    
 </head>
 
 <body>
+
+
 
     <div class="main">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -177,6 +182,8 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
             ?>
         </div>
     </div>
+    
+    
 </body>
 
 </html>

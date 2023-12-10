@@ -34,7 +34,7 @@ session_start();
 
                 <form role="form" name="signup" method="POST" onsubmit="return validateForm();">
                     <input type="text" placeholder="Username" name="username_" id="username" class="username" required="required" aria-describedby="usernameHelp" />
-                    <input type="password" placeholder="Password" id="new_password" name="new_password_" class="password" required="required" />
+                    <input type="password" placeholder="Password" id="new_password" name="new_password_" class="password" required pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#%^])[A-Za-z\d@#%^]{8,}" title="Password must be at least 8 characters long and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character (@#%^)."  />
                     <input type="password" placeholder="Confirm Password" class="password" id="confirm_password" name="confirm_password_" autocomplete="new-password" required="required" />
                     <input type="text" placeholder="First Name" class="Fname" id="Fname" name="first_name_" autocomplete="first-name" required="required">
                     <input type="text" placeholder="Last Name" class="Lname" id="Lname" name="last_name_" autocomplete="last-name" required="required" />
