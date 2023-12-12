@@ -73,7 +73,7 @@ $callback = function ($msg) use ($mainChannel) {
     $stringPass = filter_var($pass, FILTER_SANITIZE_STRING);
 
     // VARIABLES TO CONNECT TO MYSQL DATABASE SERVER
-    $servername = "192.168.194.3";
+    $servername = "192.168.194.5";
     $username_db = "test";
     $password_db = "test";
     $dbname = "FoodQuest";
