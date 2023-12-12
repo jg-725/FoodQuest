@@ -68,9 +68,16 @@ $callback = function ($backendMsg) use ($channel) {
 
 
 	/*	ENTER MYSQL CODE HERE	*/
+		
+	$servername = "192.168.194.5";
+ 		   $username_db = "test";
+   		 $password_db = "test";
+  		  $dbname = "FoodQuest";
 
 
 	//	TODO: ADD MYSQL ACCOUNT CONNECTION
+	$conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
+
 
 
 	// Insert the user data into the database
