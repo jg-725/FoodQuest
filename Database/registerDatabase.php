@@ -190,7 +190,7 @@ $callbackDB = function ($msg) use ($channelDB) {
         /* MYSQL CODE */
 
         // Connect to the database
-        $servername = "192.168.194.3";
+        $servername = "192.168.194.5";
         $username_db = "test";
         $password_db = "test";
         $dbname = "FoodQuest";
