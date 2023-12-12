@@ -81,7 +81,7 @@ $callback = function ($backendMsg) use ($channel) {
 
 
 	// Insert the user data into the database
-	$sql = "INSERT INTO Results (Comment, Rating) VALUES ('$comment', '$rating')";
+	$sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating')";
 
 	if (mysqli_query($conn, $sql)) {
     		echo "USER FEEDBACK WAS STORED IN FOODQUEST DATABASE";
