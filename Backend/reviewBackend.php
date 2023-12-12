@@ -44,22 +44,92 @@ $channel->queue_declare('backend_review', false, true, false, false);
 $backend_key = 'backendReview';
 
 // Binding three items together to receive msgs
-$channel->queue_bind('backend_review', 'frontend_exchange', $backend_key);
+$channel->queue_bind('backend_feedback', 'frontend_exchange', $backend_key);
 
 // Terminal message to signal we are waiting for messages from frontend
 echo '[*] WAITING FOR FRONTEND TO SEND USER FEEDBACK DATA. To exit press CTRL+C', "\n\n";
 
 //	CALLBACK RESPONSIBLE OF PROCESSESSING API REQUESTS
-$callback = function ($userContent) use ($channel) {
+$callback = function ($userFeedback) use ($channel) {
 
 	echo '[+] RECEIVED USER FEEDBACK FROM FRONTEND',"\n\n";
-	$incomingData = json_decode($userContent->getBody(), true);
+	$incomingData = json_decode($userFeedback->getBody(), true);
+
+	print_r($incomingData);
 
 	//	GETTING REVIEW DATA
+	$userComment = $incomingData['comment'];
+	$userRating = $incomingData['rating'];
+
+	$consumeFeedback = array();
+
+	if (empty($consumeFeedback)) {
+		$consumeFeedback['comment'] = $userComment;
+		$consumeFeedBack['rating'] = $userRating;
+	}
+
+	//	ENCODING ARRAY INTO JSON FOR DELIVERY
+	$sendFeedback = json_encode($consumeFeedback);
 
 
+	/*	PROCESS TO CONNECT TO RABBITMQ		*/
+
+	//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+	$backendFeedbackConnection = null;
+	$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+
+		foreach ($rabbitNodes as $node) {
+			try {
+            			$backendFeedbackConnection = new AMQPStreamConnection(
+								$node,
+								5672,
+								'foodquest',
+								'rabbit123'
+				);
+				echo "BACKEND FEEDBACK CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+				break;
+			} catch (Exception $e) {
+				continue;
+			}
+
+		}
+
+		//	CONNECTION TO MAIN RABBIT NODE - PRE CLUSTER
+		//$passwordConnection = new AMQPStreamConnection('192.168.194.2',5672,'foodquest','rabbit123');
+
+		if (!$backendFeedbackConnection) {
+        		die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
+		}
+
+		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE
+		$backendFeedbackChannel = $backendFeedBackConnection->channel();
+
+		//	EXCHANGE THAT WILL ROUTE MESSAGES TO DATABASE
+		$backendFeedbackChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
+
+		//	ROUTING KEY TO DETERMINE DESTINATION
+		$review_backend = 'database';
+
+		//	Getting message ready for delivery
+		$reviewMessage = new AMQPMessage(
+					$sendFeedback,
+					array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
+		);
+
+		// 	Publishing message to frontend via queue
+        	$backendFeedbackChannel->basic_publish(
+					$reviewMessage,
+					'backend_exchange',
+					$hash_key
+		);
+
+		//	COMMAND RESPONSE TO SIGNAL MSG WAS PROCESSES AND SENT
+		echo '[@] BACKEND PROTOCOL ACTIVATED [@]', "\nMESSAGE TO DATABASE\n";
+		print_r($consumeFeedback);
+
+		$backendFeedbackChannel->close();
+        	$backendFeedbackConnection->close();
 };
-
 
 
 while (true) {
@@ -88,7 +158,6 @@ while (true) {
 //	CLOSING MAIN CHANNEL AND CONNECTION
 $channel->close();
 $connection->close();
-
 
 
 ?>
