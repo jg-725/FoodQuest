@@ -1,13 +1,11 @@
 <?php
 session_start(); // Start the session
 
-/*
 // Checks if the user is logged in. If they are, redirect them to the home page as register.php should not be accessable to logged in users.
 if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
   die(header("Location: login.php")); // Redirect to login page if user is not logged in
 }
 
-*/
 ?>
 
 
@@ -226,8 +224,9 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
 		//      DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
 		$reviewChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
 
-        	$comment = $_POST[''];
-        	//$rating = $_POST['password'];
+		$userID = $_SESSION['userID'];
+        	$comment = $_POST['comment'];
+        	$rating = $_POST['rate'];
 
 		//	Routing key address so RabbitMQ knows where to send the message
         	$sendToBackend = "backendReview";
@@ -236,8 +235,8 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
         	$frontReview = array();
                 	if (empty($frontReview)) {    // Check if array is empty
 
-                    	$frontReview[''] = $comment;
-                    	//$frontReview[''] = $rating;
+                    	$frontReview['comment'] = $comment;
+                    	$frontReview['rating'] = $rating;
         	}
 
 		//	Turning array into JSON for compatibility
@@ -260,14 +259,8 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
 		// Terminating sending channel and connection
                 $reviewChannel->close();
                 $reviewConnection->close();
-
-
-
 	}
 	?>
-
-
-
 
         <!--Swiper-->
         <section class="section swiper-container swiper-slider bg-primary" data-autoplay="3500" data-loop="false" data-simulate-touch="false" data-effect="circle-bg" data-speed="750">
