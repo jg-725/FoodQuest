@@ -69,7 +69,7 @@ $callback = function ($backendMsg) use ($channel) {
 
 	/*	ENTER MYSQL CODE HERE	*/
 		
-	$servername = "192.168.194.5";
+	$servername = "192.168.194.3";
  		   $username_db = "test";
    		 $password_db = "test";
   		  $dbname = "FoodQuest";
