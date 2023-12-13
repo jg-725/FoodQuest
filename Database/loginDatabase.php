@@ -73,9 +73,9 @@ $callback = function ($msg) use ($mainChannel) {
     $stringPass = filter_var($pass, FILTER_SANITIZE_STRING);
 
     // VARIABLES TO CONNECT TO MYSQL DATABASE SERVER
-    $servername = "192.168.194.5";
+    $servername = "192.168.194.3";
     $username_db = "test";
-    $password_db = "Strongpassword1!";
+    $password_db = "test";
     $dbname = "FoodQuest";
 
     $conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
