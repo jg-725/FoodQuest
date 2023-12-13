@@ -216,9 +216,9 @@ $callbackDB = function ($msg) use ($channelDB) {
             	//	USER DOES NOT EXIST AND MEETS REGEX REQUIREMENTS
 
             	//	INSERTING NEW USER INTO FOODQUEST DATABASE
-            	$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phoneumber) VALUES ('$validUser', '$validPass', '$validFirst', '$validLast', '$validEmail', '$validAddress', '$validPhone')";
+            	$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonenumber) VALUES ('$validUser', '$validPass', '$validFirst', '$validLast', '$validEmail', '$validAddress', '$validPhone')";
 
-   	//$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phoneumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhone')";
+   	//$sql = "INSERT INTO Users (username, password, fname, lname, email, address, phonenumber) VALUES ('$stringUser', '$stringPass', '$stringFirst', '$stringLast', '$stringEmail', '$stringAddress', '$stringPhone')";
             	if (mysqli_query($conn, $sql)) {
                 	echo "[+] NEW USER WAS SUCCESSFULLY REGISTERED INTO FOODQUEST DATABASE [+]\n";
                 	$newUser = 'FALSE';
