@@ -113,7 +113,7 @@ session_start();
             	$address = $_POST['address_'];
             	$phone = $_POST['pnumber_'];
 
-            $send = array(
+            $plainSignup = array(
                 'username' => $username,
                 'password' => $password,
                 'confirm' => $confirm,
@@ -124,12 +124,12 @@ session_start();
                 'phone' => $phone
             );
 
-            $encodedSignup = json_encode($send);
+            	$encodedSignup = json_encode($plainSignup);
 
-            $msg = new AMQPMessage(
-                $encodedSignup,
-                array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
-            );
+            	$msg = new AMQPMessage(
+            		$encodedSignup,
+                	array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
+            	);
 
             	$channelSignup->basic_publish($msg, $publishExchange, $signupRK);
 
@@ -143,12 +143,11 @@ session_start();
 
 		//////////////////////////////////////////////////////////////////////////
 
-
             	/*	--- THIS SECTION WILL LISTEN FOR MESSAGES FROM DATABASE ---	*/
 
 
                 //      RABBITMQ CONNECTION SETTINGS
-                $connectionReceiveDatabase = null;
+                $connectionValidSignup = null;
                 $rabbitNodes = array('192.168.194.2', '192.168.194.1');
                 $port = 5672;
                 $user = 'foodquest';
@@ -157,7 +156,7 @@ session_start();
 		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
                 foreach ($rabbitNodes as $node) {
 			try {
-            			$connectionReceiveDatabase = new AMQPStreamConnection(
+            			$connectionValidSignup = new AMQPStreamConnection(
 									$node,
 									5672,
 									'foodquest',
@@ -170,7 +169,7 @@ session_start();
 			}
 		}
 
-		if (!$connectionReceiveDatabase) {
+		if (!$connectionValidSignup) {
                 	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE");
             	}
 
@@ -178,31 +177,39 @@ session_start();
 		$consumeExchange 	= 'database_exchange';	// Exchange Name
                 $exchangeType		= 'direct';		// Exchange Type
 		$frontendQueue	 	= 'signup_mailbox';	// Queue Name
-                $signupBK 		= 'signup-frontend';	// Binding Key
+                $signupBK 		= 'signup-frontend';	// BINDING KEY MATCHES PUBLSIHER'S ROUTING KEY
 
-            	$channelReceiveDatabase = $connectionReceiveDatabase->channel();
+		//	OPENING CHANNEL TO COMMUNICATE
+            	$channelValidSignup = $connectionValidSignup->channel();
 
-            	$channelReceiveDatabase->exchange_declare(
+		//	DECLARING DURABLE EXCHANGE
+            	$channelValidSignup->exchange_declare(
 					$consumeExchange,
 					$exchangeType,
-					false,
-					true,
-					false
+					false,		// PASSIVE
+					true,		// DURABLE
+					false		// AUTO-DELETE
 		);
 
-            	$channelReceiveDatabase->queue_declare(
+		//      DECLARING DURABLE QUEUE
+            	$channelValidSignup->queue_declare(
 					$frontendQueue,
-					false,
-					true,
-					false,
-					false
+					false,		// PASSIVE
+					true,		// DURABLE
+					false,		// EXCLUSIVE
+					false		// AUTO-DELETE
 		);
 
-            	$channelReceiveDatabase->queue_bind($$frontendQueue, $consumeExchange, $signupBK);
+		//      CREATING LINK BETWEEN EXCHANGE AND QUEUE TO GET MESSAGES
+            	$channelValidSignup->queue_bind(
+						$frontendQueue,
+						$consumeExchange,
+						$signupBK
+		);
 
-            	$frontendCallback = function ($signupContent) use ($channelReceiveDatabase) {
+            	$frontendCallback = function ($signupCondition) use ($channelValidSignup) {
 
-			$decodedDatabase = json_decode($signupContent->getBody(), true);
+			$decodedDatabase = json_decode($signupCondition->getBody(), true);
 
                 	$regexUser = $decodedDatabase['valid_signup'];
                 	$newUser = $decodedDatabase['new_user'];
@@ -227,16 +234,19 @@ session_start();
                 	}
             };
 
-            $channelReceiveDatabase->basic_consume($frontendQueue, '', false, true, false, false, $frontendCallback);
+            $channelValidSignup->basic_consume($frontendQueue, '', false, true, false, false, $frontendCallback);
 
-            while ($channelReceiveDatabase->is_open()) {
-                $channelReceiveDatabase->wait();
+            while ($channelValidSignup->is_open()) {
+                $channelValidSignup->wait();
                 break;
             }
 
-            $channelReceiveDatabase->close();
-            $connectionReceiveDatabase->close();
+            $channelValidSignup->close();
+            $connectionValidSignup->close();
         }
+
+	//////////////////////	END OF PHP SERVER POST SESSION	////////////////////////////////////////////////
+
         ?>
     </div>
 

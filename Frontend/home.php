@@ -196,16 +196,19 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-		$reviewConnection = null;
+		$feedbackConnection = null;
 		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+		$port = 5672;
+		$user = 'foodquest';
+		$pass = 'rabbit123';
 
 		foreach ($rabbitNodes as $node) {
     			try {
-        			$reviewConnection = new AMQPStreamConnection(
+        			$feedbackConnection = new AMQPStreamConnection(
 							$node,
-							5672,
-							'foodquest',
-							'rabbit123'
+							$port,
+							$user,
+							$pass
 				);
         			echo "FRONTEND HOMEPAGE CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
         			break;
@@ -214,52 +217,171 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
     			}
 		}
 
-		if (!$reviewConnection) {
+		if (!$feedbackConnection) {
     			die("FRONTEND HOMEPAGE CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE");
 		}
 
+		//      RABBITMQ MESSAGE BROKER SETTINGS
+		$publishExchange = 'frontend_exchange';  // Exchange Name
+                $exchangeType 	 = 'direct';		// Exchange Type
+                $feedbackRK 	 = 'feedback-backend';	// ROUTING KEY: BACKEND ADDRESS
+
 		//      ACTIVING MAIN CHANNEL TO SEND REQUESTS
-		$reviewChannel = $reviewConnection->channel();
+		$feedbackChannel = $feedbackConnection->channel();
 
 		//      DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
-		$reviewChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+		$feedbackChannel->exchange_declare(
+					$publishExchange,
+					$exchangeType,
+					false,	// PASSIVE
+					true,	// DURABLE
+					false	// AUTO-DELETE
+		);
 
 		$userID = $_SESSION['userID'];
         	$comment = $_POST['comment'];
         	$rating = $_POST['rate'];
 
-		//	Routing key address so RabbitMQ knows where to send the message
-        	$sendToBackend = "backendReview";
-
 		//	ARRAY TO STORE USER REVIEW POST request
-        	$frontReview = array();
-                	if (empty($frontReview)) {    // Check if array is empty
+        	$feedbackArray = array();
+                	if (empty($feedbackArray)) {    // Check if array is empty
 
-			$frontReview['user_id'] = $userID;
-                    	$frontReview['comment'] = $comment;
-                    	$frontReview['rating'] = $rating;
+			$feedbackArray['user_id'] = $userID;
+                    	$feedbackArray['comment'] = $comment;
+                    	$feedbackArray['rating'] = $rating;
         	}
 
 		//	Turning array into JSON for compatibility
-       		$encodedFrontReview = json_encode($frontReview);
+       		$encodedFeedback = json_encode($feedbackArray);
 
 		//	Creating AMQPMessage protocol once login data is ready for delivery
-        	$reviewMsg = new AMQPMessage(
-        				$encodedFrontReview,
+        	$feedbackMsg = new AMQPMessage(
+        				$encodedFeedback,
                     			array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
         	);
 
 		//	Publishing message to backend exchange using binding key indicating the receiver
-        	$reviewChannel->basic_publish($reviewMsg, 'frontend_exchange', $sendToBackend);
+        	$feedbackChannel->basic_publish(
+					$feedbackMsg,
+					$publishExchange,
+					$feedbackRK
+		);
 
 		// Message that shows login workflow was triggered
                 echo ' [x] FRONTEND TASK: SENT USER FEEDBACK TO BACKEND', "\n";
-                print_r($frontReview);
+                print_r($feedbackArray);
                 echo "\n\n";
 
 		// Terminating sending channel and connection
-                $reviewChannel->close();
-                $reviewConnection->close();
+                $feedbackChannel->close();
+                $feedbackConnection->close();
+
+
+		///////////////////////////////////////////////////////////////////////////////////
+
+		/*  	--- THIS SECTION WILL CONSUME MESSAGES FROM DATABASE TO REDIRECT ---	*/
+
+		//      RABBITMQ CONNECTION SETTINGS
+                $successFeedbackConnection = null;
+                $rabbitNodes = array('192.168.194.2', '192.168.194.1');
+                $port = 5672;
+                $user = 'foodquest';
+                $pass = 'rabbit123';
+
+		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+                foreach ($rabbitNodes as $node) {
+                        try {
+                                $successFeedbackConnection = new AMQPStreamConnection(
+                                                                $node,
+                                                                $port,
+                                                                $user,
+                                                                $pass
+                                );
+                                echo "HOME.PHP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+				break;
+			} catch (Exception $e) {
+                                continue;
+                        }
+                }
+
+		if (!$successFeedbackConnection) {
+                        die("CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
+                }
+
+		//      RABBITMQ MESSAGE BROKER SETTINGS
+                $consumeExchange = 'database_exchange';	// Exchange Name
+                $exchangeType 	 = 'direct';		// Exchange Type
+		$queueName	 = 'feedback_mailbox';	// Queue Name
+                $homeBK 	 = 'feedback-frontend';	// BINDING KEY ADDRESS: Matches publisher's routing key
+
+
+		$successFeedbackChannel = $successFeedbackConnection->channel();
+
+
+		$successFeedbackChannel->exchange_declare(
+						$consumeExchange,
+						$exchangeType,
+						false,		// PASSIVE
+						true,		// DURABLE
+						false		// AUTO-DELETE
+		);
+
+		//  	DECLARING durable queue: third parameter TRUE
+                $successFeedbackChannel->queue_declare(
+						$queueName,
+						false,
+						true,
+						false,
+						false
+		);
+
+		//     Binding corresponding queue and exchange
+                $successFeedbackChannel->queue_bind(
+						$queueName,
+						$consumeExchange,
+						$homeBK
+		);
+
+
+		// Establishing callback variable for processing messages from database
+		$feedbackCallback = function ($feedbackMsg) use ($successFeedbackChannel) {
+
+			// Decoding received msg from database into usable code for processing
+                	$decodedMsg = json_decode($feedbackMsg->getBody(), true);
+
+			$feedbackCheck = $decodedMsg['message'];
+
+			// REDIRECT TO DISPLAY SUCCESSFUL FEEDBACK PAGE
+			if ($feedbackCheck == 'SUCCESS') {
+				echo "<script>alert('YOUR FEEDBACK WAS SENT TO FOODQUEST!');</script>";
+				header("Location: commentReg.php");
+			}
+			else {
+				echo "<script>alert('ERROR IS PROCESSING YOUR FEEDBACK, PLEASE TRY AGAIN');</script>";
+			}
+		};
+
+		// Triggering the process to consume msgs from DATABASE IF USER EXISTS
+                $successFeedbackChannel->basic_consume(
+						$queueName,
+						'',
+						false,
+						true,
+						false,
+						false,
+						$feedbackCallback
+		);
+
+		// while loop to keep checking for incoming messages from the database
+                while ($successFeedbackChannel->is_open()) {
+                    $successFeedbackChannel->wait();
+                    break;
+                }
+
+		// Terminating MAIN Channel and Connection for receiving msgs
+                $successFeedbackChannel->close();
+                $successFeedbackConnection->close();
+
 	}
 	?>
 
