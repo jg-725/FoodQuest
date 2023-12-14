@@ -10,17 +10,19 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 
 //      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-$connection = null;
+$mainBackendConnection = null;
 $rabbitNodes = array('192.168.194.2', '192.168.194.1');
-
+$port = 5672;
+$user = 'foodquest';
+$pass = 'rabbit123';
 
 foreach ($rabbitNodes as $node) {
 	try {
-        	$connection = new AMQPStreamConnection(
+        	$mainBackendConnection = new AMQPStreamConnection(
 						$node,
-						5672,
-						'foodquest',
-						'rabbit123'
+						$port,
+						$user,
+						$pass
 		);
 		echo "BACKEND SIGNUP CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
 		break;
@@ -29,38 +31,53 @@ foreach ($rabbitNodes as $node) {
 	}
 }
 
-
-
 //	CONNECTING TO MAIN RABBIT NODE
 //$connection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
-if (!$connection) {
+if (!$mainBackendConnection) {
 	die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 }
 
-//	ACTIVING MAIN CHANNEL FOR FRONTEND CONNECTION
-$channel = $connection->channel();
+//      RABBITMQ MESSAGE BROKER SETTINGS
+$consumerExchange 	= 'frontend_exchange';	// Exchange Name
+$exchangeType 		= 'direct';		// Exchange Type
+$backendQueue	 	= 'hash_mailbox';	// Queue Name
+$hashBK   		= 'signup-backend';	// BINDING KEY MATCHES SIGNUP ROUTING KEY
 
-//	DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
-$channel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+
+//	ACTIVING MAIN CHANNEL FOR BACKEND CONNECTION
+$mainBackendChannel = $mainBackendConnection->channel();
+
+//	DECLARING DURABLE EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
+$mainBackendChannel->exchange_declare(
+			$consumerExchange,
+			$exchangeType,
+			false,			// PASSIVE
+			true,			// DURABLE
+			false			// AUTO-DELETE
+);
 
 //	USING DURABLE QUEUE FOR WEBSITE: Third parameter is TRUE
-$channel->queue_declare('backend_mailbox', false, true, false, false);
-
-// Binding key
-$binding_key = "backend";
+$mainBackendChannel->queue_declare(
+		$backendQueue,
+		false,		// PASSIVE: check whether an exchange exists without modifying the server state
+		true,		// DURABLE: the queue will survive a broker restart
+		false,		// EXCLUSIVE: used by only one connection and the queue will be deleted when that connection closes
+		false		// AUTO-DELETE: queue is deleted when last consumer unsubscribes
+);
 
 // Binding three items together to receive msgs
-$channel->queue_bind('backend_mailbox', 'frontend_exchange', $binding_key);
+$mainBackendChannel->queue_bind($backendQueue, $consumerExchange, $hashBK);
+
 
 // Terminal message to signal we are waiting for messages from frontend
-echo '[*] WAITING FOR FRONTEND TO SEND MESSAGES. To exit press CTRL+C', "\n\n";
+echo '[*] WAITING FOR FRONTEND TO SIGNUP DATA. To exit press CTRL+C', "\n\n";
 
 //	CALLBACK RESPONSIBLE OF PROCESSESSING VALID AND INVALID USER REQUESTS
-$callback = function ($userData) use ($channel) {
+$hashCallback = function ($signupRequest) use ($mainBackendChannel) {
 
-	echo '[+] RECEIVED REGISTRATION INPUT FROM FRONTEND',"\n\n";
-	$registerData = json_decode($userData->getBody(), true);
+	echo '[+] RECEIVED USER SIGNUP REQUEST FROM FRONTEND',"\n\n";
+	$registerData = json_decode($signupRequest->getBody(), true);
 
 	//	GETTING SENDER VARIABLES
 
@@ -90,21 +107,23 @@ $callback = function ($userData) use ($channel) {
         if ($stringConfirm == $stringPass) {
                 $passwordConfirm = TRUE;
 		//      Hash the password using the default algorithm (currently bcrypt)
-        	$hashedPassword = password_hash($stringPass, PASSWORD_DEFAULT);
+        	$hashPassword = password_hash($stringPass, PASSWORD_DEFAULT);
         }
         else {
                 $passwordConfirm = FALSE;
         }
 
 		// Command line message
-		echo "[+] SIGNUP PASSWORD HAS BEEN HASHED";
+		echo "[+] PASSWORD HAS BEEN HASHED FOR SECURITY\n";
 
 		$consumeRegister = array();
 
-		//	CREATING ARRAY OF VALID REGEX LOGIN
+		//	CREATING ARRAY THAT SENDS HASHED PASSWORD
 		if (empty($consumeRegister)) {
+
 			$consumeRegister['username'] = $stringUser;
 			$consumeRegister['password'] = $stringPass;
+			$consumeRegister['hash'] = $hashPassword;
 			$consumeRegister['first'] = $stringFirst;
 			$consumeRegister['last'] = $stringLast;
 			$consumeRegister['email'] = $stringEmail;
@@ -114,24 +133,29 @@ $callback = function ($userData) use ($channel) {
 		}
 
 		//	ENCODING ARRAY INTO JSON FOR DELIVERY
-		$sendRegister = json_encode($consumeRegister);
+		$hashArray = json_encode($consumeRegister);
 
 
-		/*	PROCESS TO CONNECT TO RABBITMQ		*/
+		////////	PROCESS TO CONNECT TO RABBITMQ		*/
+
 
 		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-		$passwordConnection = null;
+
+		$hashConnection = null;
 		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+		$port = 5672;
+                $user = 'foodquest';
+                $pass = 'rabbit123';
 
 		foreach ($rabbitNodes as $node) {
 			try {
-            			$passwordConnection = new AMQPStreamConnection(
+            			$hashConnection = new AMQPStreamConnection(
 								$node,
-								5672,
-								'foodquest',
-								'rabbit123'
+								$port,
+								$user,
+								$pass
 				);
-				echo "BACKEND PASSWORD CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+				echo "BACKEND PROTOCOL CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
 				break;
 			} catch (Exception $e) {
 				continue;
@@ -142,39 +166,46 @@ $callback = function ($userData) use ($channel) {
 		//	CONNECTION TO MAIN RABBIT NODE - PRE CLUSTER
 		//$passwordConnection = new AMQPStreamConnection('192.168.194.2',5672,'foodquest','rabbit123');
 
-		if (!$passwordConnection) {
+		if (!$hashConnection) {
         		die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 		}
 
+		//      RABBITMQ MESSAGE BROKER SETTINGS TO SEND MESSAGES
+		$publishExchange 	= 'backend_exchange';	// Exchange Name
+                $exchangeType		= 'direct';		// Exchange Type
+                $hashRK 		= 'hash-database';	// ROUTING KEY TO DETERMINE DESTINATION
 
 		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE
-		$passwordChannel = $passwordConnection->channel();
+		$hashChannel = $hashConnection->channel();
 
 		//	EXCHANGE THAT WILL ROUTE MESSAGES TO DATABASE
-		$passwordChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
-
-		//	ROUTING KEY TO DETERMINE DESTINATION
-		$hash_key = 'database';
+		$hashChannel->exchange_declare(
+			$publishExchange,
+			$exchangeType,
+			false,		// PASSIVE
+			true,		// DURABLE
+			false		// AUTO-DELETE
+		);
 
 		//	Getting message ready for delivery
-		$passwordMessage = new AMQPMessage(
-					$sendRegister,
+		$hashedMessage = new AMQPMessage(
+					$hashArray,
 					array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
 		);
 
 		// 	Publishing message to frontend via queue
-        	$passwordChannel->basic_publish(
-					$passwordMessage,
-					'backend_exchange',
-					$hash_key
+        	$hashChannel->basic_publish(
+					$hashedMessage,
+					$publishExchange,
+					$hashRK
 		);
 
 		//	COMMAND RESPONSE TO SIGNAL MSG WAS PROCESSES AND SENT
 		echo '[@] HASHING PROTOCOL ACTIVATED [@]', "\nMESSAGE TO DATABASE\n";
 		print_r($consumeRegister);
 
-		$passwordChannel->close();
-        	$passwordConnection->close();
+		$hashChannel->close();
+        	$hashConnection->close();
 
 };
 
@@ -182,15 +213,15 @@ while (true) {
 
 	try {
 		// 	MAIN CHANNEL QUALITY CONTROL
-		$channel->basic_qos(null, 1, false);
+		$mainBackendChannel->basic_qos(null, 1, false);
 
 		//	MAIN CHANNEL TO CONSUME MESSAGES FROM FRONTEND
-		$channel->basic_consume('backend_mailbox', '', false, true, false, false, $callback);
+		$mainBackendChannel->basic_consume($backendQueue, '', false, true, false, false, $callback);
 
 		//	TODO: CREATE FUNCTION OR LOOP TO ACTIVE LISTEN FOR MESSAGES FROM FRONTEND
 
-		while(count($channel->callbacks)) {
-       			$channel->wait();
+		while (count($mainBackendChannel->callbacks)) {
+       			$mainBackendChannel->wait();
 			echo 'NO MORE INCOMING MESSAGES', "\n\n";
 			break;
 		}
@@ -202,8 +233,8 @@ while (true) {
     	}
 }
 //	CLOSING MAIN CHANNEL AND CONNECTION
-$channel->close();
-$connection->close();
+$mainBackendChannel->close();
+$mainBackendConnection->close();
 
 ?>
 
