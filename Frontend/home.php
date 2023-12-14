@@ -235,6 +235,7 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
         	$frontReview = array();
                 	if (empty($frontReview)) {    // Check if array is empty
 
+			$frontReview['user_id'] = $userID;
                     	$frontReview['comment'] = $comment;
                     	$frontReview['rating'] = $rating;
         	}
