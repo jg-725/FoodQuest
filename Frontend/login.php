@@ -68,31 +68,62 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
 
                 /*  	Sending/Publishing Section   	*/
 
-                // Connecting to Main RabbitMQ Node IP
-                $senderConnection = new AMQPStreamConnection(
-                    '192.168.194.2',
-                    5672,
-                    'foodquest',
-                    'rabbit123'
-                );
+
+		//      RABBITMQ CONNECTION SETTINGS
+		$loginConnection = null;
+		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+		$port = 5672;
+		$user = 'foodquest';
+		$pass = 'rabbit123';
+
+		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+		foreach ($rabbitNodes as $node) {
+                	try {
+                		$loginConnection = new AMQPStreamConnection(
+                    						$node,
+                    						$port,
+                    						$user,
+                    						$pass
+                		);
+				echo "LOGIN.PHP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+				break;
+			} catch (Exception $e) {
+				continue;
+			}
+		}
+
+		if (!$loginConnection) {
+                	die("LOGIN CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
+            	}
+
+		//      RABBITMQ MESSAGE BROKER SETTINGS
+		$exchangeName 	= 'frontend_exchange';
+                $exchangeType 	= 'direct';
+                $loginRK 	= 'login-backend';		// ROUTING KEY ADDRESS
 
                 $username = $_POST['username'];
                 $password = $_POST['password'];
 
-                $senderChannel = $senderConnection->channel();    //Establishing Channel Connection for communication
+                $loginchannel = $loginConnection->channel();    // Establishing Channel Connection for communication
 
                 // Declaring exchange for frontend to send/publish messages
-                $senderChannel->exchange_declare('frontend_exchange', 'direct', false, false, false);
+                $loginChannel->exchange_declare(
+						$exchangeName,
+						$exchangeType,
+						false,	// PASSIVE
+						true,	// DURABLE
+						false	// AUTO-DELETE
+		);
 
-                // Routing key address so RabbitMQ knows where to send the message
-                $sendLoginKey = "backend";
+		$username = $_POST['username'];
+                $password = $_POST['password'];
 
                 // Creating an array to store user login POST request
                 $loginArray = array();
                 if (empty($loginArray)) {    // Check if array is empty
-                    //$send['type'] = ;
-                    $loginArray['username'] = $username;
-                    $loginArray['password'] = $password;
+
+                	$loginArray['username'] = $username;
+                    	$loginArray['password'] = $password;
                 }
 
                 // Turning array into JSON for compatibility
@@ -100,12 +131,12 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
 
                 // Creating AMQPMessage protocol once login data is ready for delivery
                 $msg = new AMQPMessage(
-                    $encodedLogin,
-                    array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
+                		$encodedLogin,
+                    		array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
                 );
 
                 // Publishing message to backend exchange using binding key indicating the receiver
-                $senderChannel->basic_publish($msg, 'frontend_exchange', $sendLoginKey);
+                $loginChannel->basic_publish($msg, $exchangeName, $loginRK);
 
                 // Message that shows login workflow was triggered
                 echo ' [x] FRONTEND TASK: SENT LOGIN TO BACKEND', "\n";
@@ -113,25 +144,76 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
                 echo "\n\n";
 
                 // Terminating sending channel and connection
-                $senderChannel->close();
-                $senderConnection->close();
+                $loginChannel->close();
+                $loginConnection->close();
 
-                //  	--- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---
 
-                //    Connecting to RabbitMQ
-                $connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+		//////////////////////////////////////////////////////////////////////////
+
+                /*  	--- THIS PART WILL LISTEN FOR MESSAGES FROM DATABASE ---	*/
+
+		 //      RABBITMQ CONNECTION SETTINGS
+                $connectionReceiveDatabase = null;
+                $rabbitNodes = array('192.168.194.2', '192.168.194.1');
+                $port = 5672;
+                $user = 'foodquest';
+                $pass = 'rabbit123';
+
+		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+                foreach ($rabbitNodes as $node) {
+                        try {
+                                $connectionReceiveDatabase = new AMQPStreamConnection(
+                                                                $node,
+                                                                $port,
+                                                                $user,
+                                                                $pass
+                                );
+                                echo "LOGIN.PHP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+				break;
+			} catch (Exception $e) {
+                                continue;
+                        }
+                }
+
+                //    Connecting to MAIN RabbitMQ
+                //$connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
+		if (!$connectionReceiveDatabase) {
+                        die("CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
+                }
+
+		//      RABBITMQ MESSAGE BROKER SETTINGS
+                $receiveExchange = 'database_exchange';	// Exchange Name
+                $exchangeType 	 = 'direct';		// Exchange Type
+		$queueName	 = 'login_mailbox';	// Queue Name
+                $loginBK 	 = 'login-frontend';	// Binding Key
+
 
                 $channelReceiveDatabase = $connectionReceiveDatabase->channel();
 
-                $channelReceiveDatabase->exchange_declare('database_exchange', 'direct', false, false, false);
+                $channelReceiveDatabase->exchange_declare(
+						$receiveExchange,
+						$exchangeType,
+						false,		// PASSIVE
+						true,		// DURABLE
+						false		// AUTO-DELETE
+		);
 
                 //  	DECLARING durable queue: third parameter TRUE
-                $channelReceiveDatabase->queue_declare('frontend_mailbox', false, true, false, false);
+                $channelReceiveDatabase->queue_declare(
+						$queueName,
+						false,
+						true,
+						false,
+						false
+		);
 
-                $loginKey = 'frontend';
 
                 //     Binding corresponding queue and exchange
-                $channelReceiveDatabase->queue_bind('frontend_mailbox', 'database_exchange', $loginKey);
+                $channelReceiveDatabase->queue_bind(
+						$queueName,
+						$receiveExchange,
+						$loginBK);
 
                 // Establishing callback variable for processing messages from database
                 $receiverCallback = function ($msgContent) use ($channelReceiveDatabase) {
@@ -157,8 +239,8 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
                     // Commands to be executed if the user exists
                     else  {
                         
-                         $_SESSION['userID']= $userID;
-                         $_SESSION['username']= $dbUser;
+                         $_SESSION['userID'] = $userID;
+                         $_SESSION['username'] = $dbUser;
                          die(header("Location: home.php"));
                          
                           //echo $dbUser;
@@ -166,7 +248,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
                 };
 
                 // Triggering the process to consume msgs from DATABASE IF USER EXISTS
-                $channelReceiveDatabase->basic_consume('frontend_mailbox', '', false, true, false, false, $receiverCallback);
+                $channelReceiveDatabase->basic_consume($queueName, '', false, true, false, false, $receiverCallback);
 
                 // while loop to keep checking for incoming messages from the database
                 while ($channelReceiveDatabase->is_open()) {
