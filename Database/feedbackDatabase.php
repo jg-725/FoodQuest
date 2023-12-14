@@ -34,17 +34,27 @@ if (!$feedbackDatabaseConnection) {
 	die("CONNECTION ERROR: DATABASE COULD NOT CONNECT TO ANY RABBITMQ NODE.");
 }
 
-/ 	EXCHANGE THAT WILL ROUTED MESSAGES COMING FROM BACKEND
-$channelDB->exchange_declare('backend_exchange', 'direct', false, false, false);
+// RabbitMQ channel connection settings
+$exchangeName = 'backend_exchange';
+$queueName = 'database_feedback';
+$exchangeType = 'direct';
+$feedbackDBkey = 'databaseFeedback';
+
+
+// 	EXCHANGE THAT WILL ROUTED MESSAGES COMING FROM BACKEND
+$channelDB->exchange_declare(
+			$exchangeName,
+			$exchangeType,
+			false,
+			true,		// DURABLE
+			false		// AUTO-DELETE
+);
 
 // 	Using DURABLE QUEUES FOR DELIVERY: Third parameter is TRUE
-$channelDB->queue_declare('database_review', false, true, false, false);
-
-// 	Binding key
-$databaseReviewKey = "databaseReview";
+$channelDB->queue_declare($queueName, false, true, false, false);
 
 // 	Binding three items together to receive msgs
-$channelDB->queue_bind('database_review', 'backend_exchange', $databaseReviewKey);
+$channelDB->queue_bind($queueName, $exchangeName, $feedbackDBkey);
 
 // 	Terminal message to signal we are waiting for messages from BACKEND
 echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
@@ -162,7 +172,7 @@ $callback = function ($backendMsg) use ($channel) {
 while (true) {
 	try {
 		$channelDB->basic_qos(null, 1, false);
-		$channelDB->basic_consume('database_review', '', false, true, false, false, $callbackDB);
+		$channelDB->basic_consume($queueName, '', false, true, false, false, $callbackDB);
 
 		while(count($channelDB->callbacks)) {
        			$channelDB->wait();

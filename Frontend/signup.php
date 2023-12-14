@@ -81,7 +81,9 @@ session_start();
                 die("SIGNUP CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
             }
 
-
+		$exchangeName = 'frontend_exchange';
+		$exchangeType = 'direct';
+		$routingKey = 'backend';
 
 
             $username = $_POST['username_'];
@@ -95,9 +97,7 @@ session_start();
 
             $channelSignup = $connectionSignup->channel();
 
-            $channelSignup->exchange_declare('frontend_exchange', 'direct', false, false, false);
-
-            $routing_key = "backend";
+            $channelSignup->exchange_declare($exchangeName, $exchangeType, false, false, false);
 
             $send = array(
                 'username' => $username,
@@ -117,7 +117,7 @@ session_start();
                 array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
             );
 
-            $channelSignup->basic_publish($msg, 'frontend_exchange', $routing_key);
+            $channelSignup->basic_publish($msg, $exchangeName, $routingKey);
 
             echo ' [x] Frontend Task: SENT USER REGISTRATION TO BACKEND FOR PROCESSING', "\n";
             print_r($send);
@@ -156,20 +156,34 @@ session_start();
                 die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE");
             }
 
+		$receiverExchangeName = 'database_exchange';
+                $exchangeType = 'direct';
+		$receiverQueueName = 'database_exchange';
+                $userExistsBK = 'frontend';
 
+            	$channelReceiveDatabase = $connectionReceiveDatabase->channel();
 
-            $channelReceiveDatabase = $connectionReceiveDatabase->channel();
+            	$channelReceiveDatabase->exchange_declare(
+					$receiverExchangeName,
+					$exchangeType,
+					false,
+					true,
+					false
+		);
 
-            $channelReceiveDatabase->exchange_declare('database_exchange', 'direct', false, false, false);
+            	$channelReceiveDatabase->queue_declare(
+					$receiverQueueName,
+					false,
+					true,
+					false,
+					false
+		);
 
-            $userExists = "frontend";
+            	$channelReceiveDatabase->queue_bind($receiverQueueName, $receiverExchangeName, $userExistsBK);
 
-            $channelReceiveDatabase->queue_declare('frontend_mailbox', false, true, false, false);
+            	$frontendCallback = function ($signupContent) use ($channelReceiveDatabase) {
 
-            $channelReceiveDatabase->queue_bind('frontend_mailbox', 'database_exchange', $userExists);
-
-            $frontendCallback = function ($signupContent) use ($channelReceiveDatabase) {
-                $decodedDatabase = json_decode($signupContent->getBody(), true);
+		$decodedDatabase = json_decode($signupContent->getBody(), true);
 
                 $regexUser = $decodedDatabase['valid_signup'];
                 $newUser = $decodedDatabase['new_user'];
@@ -193,7 +207,7 @@ session_start();
                 }
             };
 
-            $channelReceiveDatabase->basic_consume('frontend_mailbox', '', false, true, false, false, $frontendCallback);
+            $channelReceiveDatabase->basic_consume($receiverQueueName, '', false, true, false, false, $frontendCallback);
 
             while ($channelReceiveDatabase->is_open()) {
                 $channelReceiveDatabase->wait();

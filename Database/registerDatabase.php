@@ -32,6 +32,11 @@ if (!$connectionDB) {
 	die("RABBITMQ CONNECTION ERROR: DATABASE COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 }
 
+//	TODO: ADD RabbitMQ CHANNEL connection settings
+
+
+
+
 // CONNECTING TO MAIN RABBITMQ
 //$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
