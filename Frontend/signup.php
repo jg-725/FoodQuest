@@ -55,8 +55,11 @@ session_start();
         use PhpAmqpLib\Message\AMQPMessage;
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
            // $connectionSignup = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+
 		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+
 		$connectionSignup = null;
 		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
 
@@ -77,9 +80,9 @@ session_start();
 
 		}
 
-            if (!$connectionSignup) {
-                die("SIGNUP CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
-            }
+            	if (!$connectionSignup) {
+                	die("SIGNUP CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
+            	}
 
 		$exchangeName = 'frontend_exchange';
 		$exchangeType = 'direct';
@@ -128,7 +131,6 @@ session_start();
 
 
 
-
             //$connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
             /*	RECEIVING DATABASE VALIDATION	*/
@@ -152,13 +154,14 @@ session_start();
 				continue;
 			}
 		}
-            if (!$connectionReceiveDatabase) {
-                die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE");
-            }
+
+		if (!$connectionReceiveDatabase) {
+                	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE");
+            	}
 
 		$receiverExchangeName = 'database_exchange';
                 $exchangeType = 'direct';
-		$receiverQueueName = 'database_exchange';
+		$receiverQueueName = 'frontend_signup_mailbox';
                 $userExistsBK = 'frontend';
 
             	$channelReceiveDatabase = $connectionReceiveDatabase->channel();
