@@ -58,12 +58,16 @@ session_start();
 
            // $connectionSignup = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
+		/*  	--- THIS SECTION WILL SEND SIGNUP DATA TO BACKEND ---	*/
+
+		//      RABBITMQ CONNECTION SETTINGS
+                $connectionSignup = null;
+                $rabbitNodes = array('192.168.194.2', '192.168.194.1');
+                $port = 5672;
+                $user = 'foodquest';
+                $pass = 'rabbit123';
+
 		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-
-		$connectionSignup = null;
-		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
-
-
 		foreach ($rabbitNodes as $node) {
 			try {
             			$connectionSignup = new AMQPStreamConnection(
@@ -72,7 +76,7 @@ session_start();
 								'foodquest',
 								'rabbit123'
 				);
-				echo "SIGNUP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+				echo "SIGNUP CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
 				break;
 			} catch (Exception $e) {
 				continue;
@@ -81,26 +85,33 @@ session_start();
 		}
 
             	if (!$connectionSignup) {
-                	die("SIGNUP CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
+                	die("SIGNUP CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO ANY RABBITMQ NODE.");
             	}
 
-		$exchangeName = 'frontend_exchange';
+		//      RABBITMQ MESSAGE BROKER SETTINGS
+		$publishExchange = 'frontend_exchange';
 		$exchangeType = 'direct';
-		$routingKey = 'backend';
+		$signupRK   = 'signup-backend';
 
+		$channelSignup = $connectionSignup->channel();
 
-            $username = $_POST['username_'];
-            $password = $_POST['new_password_'];
-            $confirm = $_POST['confirm_password_'];
-            $firstname = $_POST['first_name_'];
-            $lastname = $_POST['last_name_'];
-            $email = $_POST['email_'];
-            $address = $_POST['address_'];
-            $phone = $_POST['pnumber_'];
+            	$channelSignup->exchange_declare(
+						$publishExchange,
+						$exchangeType,
+						false,	// PASSIVE
+						true,	// DURABLE
+						false	// AUTO-DELETE
+		);
 
-            $channelSignup = $connectionSignup->channel();
-
-            $channelSignup->exchange_declare($exchangeName, $exchangeType, false, false, false);
+		// GETTING POST VARIABLES FROM FORM
+            	$username = $_POST['username_'];
+            	$password = $_POST['new_password_'];
+            	$confirm = $_POST['confirm_password_'];
+            	$firstname = $_POST['first_name_'];
+            	$lastname = $_POST['last_name_'];
+            	$email = $_POST['email_'];
+            	$address = $_POST['address_'];
+            	$phone = $_POST['pnumber_'];
 
             $send = array(
                 'username' => $username,
@@ -120,26 +131,30 @@ session_start();
                 array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT)
             );
 
-            $channelSignup->basic_publish($msg, $exchangeName, $routingKey);
+            	$channelSignup->basic_publish($msg, $publishExchange, $signupRK);
 
-            echo ' [x] Frontend Task: SENT USER REGISTRATION TO BACKEND FOR PROCESSING', "\n";
-            print_r($send);
-            echo "\n\n";
+            	echo ' [x] Frontend Task: SENT USER REGISTRATION TO BACKEND FOR PROCESSING', "\n";
+            	print_r($send);
+            	echo "\n\n";
 
-            $channelSignup->close();
-            $connectionSignup->close();
+            	$channelSignup->close();
+            	$connectionSignup->close();
 
 
+		//////////////////////////////////////////////////////////////////////////
 
-            //$connectionReceiveDatabase = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
-            /*	RECEIVING DATABASE VALIDATION	*/
+            	/*	--- THIS SECTION WILL LISTEN FOR MESSAGES FROM DATABASE ---	*/
 
-                //      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
+
+                //      RABBITMQ CONNECTION SETTINGS
                 $connectionReceiveDatabase = null;
                 $rabbitNodes = array('192.168.194.2', '192.168.194.1');
+                $port = 5672;
+                $user = 'foodquest';
+                $pass = 'rabbit123';
 
-
+		//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
                 foreach ($rabbitNodes as $node) {
 			try {
             			$connectionReceiveDatabase = new AMQPStreamConnection(
@@ -159,15 +174,16 @@ session_start();
                 	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE");
             	}
 
-		$receiverExchangeName = 'database_exchange';
-                $exchangeType = 'direct';
-		$receiverQueueName = 'frontend_signup_mailbox';
-                $userExistsBK = 'frontend';
+		//      RABBITMQ MESSAGE BROKER SETTINGS
+		$consumeExchange 	= 'database_exchange';	// Exchange Name
+                $exchangeType		= 'direct';		// Exchange Type
+		$frontendQueue	 	= 'signup_mailbox';	// Queue Name
+                $signupBK 		= 'signup-frontend';	// Binding Key
 
             	$channelReceiveDatabase = $connectionReceiveDatabase->channel();
 
             	$channelReceiveDatabase->exchange_declare(
-					$receiverExchangeName,
+					$consumeExchange,
 					$exchangeType,
 					false,
 					true,
@@ -175,42 +191,43 @@ session_start();
 		);
 
             	$channelReceiveDatabase->queue_declare(
-					$receiverQueueName,
+					$frontendQueue,
 					false,
 					true,
 					false,
 					false
 		);
 
-            	$channelReceiveDatabase->queue_bind($receiverQueueName, $receiverExchangeName, $userExistsBK);
+            	$channelReceiveDatabase->queue_bind($$frontendQueue, $consumeExchange, $signupBK);
 
             	$frontendCallback = function ($signupContent) use ($channelReceiveDatabase) {
 
-		$decodedDatabase = json_decode($signupContent->getBody(), true);
+			$decodedDatabase = json_decode($signupContent->getBody(), true);
 
-                $regexUser = $decodedDatabase['valid_signup'];
-                $newUser = $decodedDatabase['new_user'];
+                	$regexUser = $decodedDatabase['valid_signup'];
+                	$newUser = $decodedDatabase['new_user'];
 
-                if ($regexUser == 'FALSE') {
-                  echo "\n[Incorrect format for Registration Info]\n";
-                    echo "<script>location.href='signup.php';</script>";
-                }
+                	if ($regexUser == 'FALSE') {
+                  		echo "\n[Incorrect format for Registration Info]\n";
+                    		echo "<script>location.href='signup.php';</script>";
+                	}
 
-                if ($regexUser == 'TRUE') {
-                    if ($newUser == 'FALSE') {
-                        echo "\n[Successfully Registered!]\n";
-                        header("Location: successReg.php");
-                        // Ensure that no further output is sent
-                        //exit();
-                    } else {
-                        echo "\nUsername / Email is already taken!\n";
-                        echo "<script>alert('Username/Email is already taken!');</script>";
-                        echo "<script>location.href='signup.php';</script>";
-                    }
-                }
+                	if ($regexUser == 'TRUE') {
+                    		if ($newUser == 'FALSE') {
+                        		echo "\n[Successfully Registered!]\n";
+					echo "<script>alert('WELCOME TO FOODQUEST!');</script>";
+                        		header("Location: successReg.php");
+                        		// Ensure that no further output is sent
+                        		//exit();
+                    		} else {
+                        		echo "\nUsername / Email is already taken!\n";
+                        		echo "<script>alert('Username/Email is already taken!');</script>";
+                        		echo "<script>location.href='signup.php';</script>";
+                    		}
+                	}
             };
 
-            $channelReceiveDatabase->basic_consume($receiverQueueName, '', false, true, false, false, $frontendCallback);
+            $channelReceiveDatabase->basic_consume($frontendQueue, '', false, true, false, false, $frontendCallback);
 
             while ($channelReceiveDatabase->is_open()) {
                 $channelReceiveDatabase->wait();
