@@ -97,18 +97,16 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
             	}
 
 		//      RABBITMQ MESSAGE BROKER SETTINGS
-		$exchangeName 	= 'frontend_exchange';
-                $exchangeType 	= 'direct';
-                $loginRK 	= 'login-backend';		// ROUTING KEY ADDRESS
+		$publishExchange = 'frontend_exchange';  // Exchange Name
+                $exchangeType 	 = 'direct';		// Exchange Type
+                $loginRK 	 = 'login-backend';	// ROUTING KEY
 
-                $username = $_POST['username'];
-                $password = $_POST['password'];
 
                 $loginchannel = $loginConnection->channel();    // Establishing Channel Connection for communication
 
                 // Declaring exchange for frontend to send/publish messages
                 $loginChannel->exchange_declare(
-						$exchangeName,
+						$publishExchange,
 						$exchangeType,
 						false,	// PASSIVE
 						true,	// DURABLE
@@ -136,7 +134,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
                 );
 
                 // Publishing message to backend exchange using binding key indicating the receiver
-                $loginChannel->basic_publish($msg, $exchangeName, $loginRK);
+                $loginChannel->basic_publish($msg, $publishExchange, $loginRK);
 
                 // Message that shows login workflow was triggered
                 echo ' [x] FRONTEND TASK: SENT LOGIN TO BACKEND', "\n";
@@ -183,16 +181,16 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
                 }
 
 		//      RABBITMQ MESSAGE BROKER SETTINGS
-                $receiveExchange = 'database_exchange';	// Exchange Name
+                $consumeExchange = 'database_exchange';	// Exchange Name
                 $exchangeType 	 = 'direct';		// Exchange Type
 		$queueName	 = 'login_mailbox';	// Queue Name
-                $loginBK 	 = 'login-frontend';	// Binding Key
+                $loginBK 	 = 'login-frontend';	// BINDING KEY
 
 
                 $channelReceiveDatabase = $connectionReceiveDatabase->channel();
 
                 $channelReceiveDatabase->exchange_declare(
-						$receiveExchange,
+						$consumeExchange,
 						$exchangeType,
 						false,		// PASSIVE
 						true,		// DURABLE
@@ -212,7 +210,7 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
                 //     Binding corresponding queue and exchange
                 $channelReceiveDatabase->queue_bind(
 						$queueName,
-						$receiveExchange,
+						$consumeExchange,
 						$loginBK);
 
                 // Establishing callback variable for processing messages from database
