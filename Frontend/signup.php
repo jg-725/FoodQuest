@@ -89,9 +89,9 @@ session_start();
             	}
 
 		//      RABBITMQ MESSAGE BROKER SETTINGS TO SEND
-		$publishExchange = 'database_exchange';
+		$publishExchange = 'frontend_exchange';
 		$exchangeType = 'direct';
-		$signupRK   = 'newUser-frontend';
+		$signupRK   = 'signup-backend';
 
 		$channelSignup = $connectionSignup->channel();
 

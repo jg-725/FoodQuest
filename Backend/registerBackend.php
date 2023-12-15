@@ -163,9 +163,6 @@ $hashCallback = function ($signupRequest) use ($mainBackendChannel) {
 
 		}
 
-		//	CONNECTION TO MAIN RABBIT NODE - PRE CLUSTER
-		//$passwordConnection = new AMQPStreamConnection('192.168.194.2',5672,'foodquest','rabbit123');
-
 		if (!$hashConnection) {
         		die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 		}

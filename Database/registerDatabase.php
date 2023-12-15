@@ -69,7 +69,7 @@ $DBRegisterChannel->queue_declare(
 $DBRegisterChannel->queue_bind($databaseQueue, $consumeExchange, $databaseBK);
 
 // Terminal message to signal we are waiting for messages from BACKEND
-echo '[*] Waiting For BACKEND To Send Data. To exit press CTRL+C', "\n\n";
+echo '[*] Waiting For BACKEND TO SEND SIGNUP DATA. To exit press CTRL+C', "\n\n";
 
 $callbackDB = function ($hashMsg) use ($DBRegisterChannel) {
 	//echo '[+] RECEIVED HASHED PASSWORD FROM BACKEND', "\n\n";
@@ -246,7 +246,7 @@ $callbackDB = function ($hashMsg) use ($DBRegisterChannel) {
 								$node,
 								$port,
 								$user,
-								$pass'
+								$pass
 			);
 			echo "DATABASE REGISTRATION CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
 			break;
@@ -257,15 +257,13 @@ $callbackDB = function ($hashMsg) use ($DBRegisterChannel) {
 	}
 
         // ESTABLISHING CONNECTION
-        //$existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
-
         if (!$newUserConnection) {
                 die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
         }
 
 	//      RABBITMQ MESSAGE BROKER SETTINGS TO SEND MESSAGES
 	$publishExchange = 'database_exchange'; // Exchange Name
-	$exchangeType 	 = 'direct'; 		// Exchange Type 
+	$exchangeType 	 = 'direct'; 		// Exchange Type
 	$newUserRK 	 = 'newUser-Frontend';  // ROUTING KEY TO DETERMINE DESTINATION
 
         $newUserChannel = $newUserConnection->channel();
