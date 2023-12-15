@@ -88,10 +88,10 @@ session_start();
                 	die("SIGNUP CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO ANY RABBITMQ NODE.");
             	}
 
-		//      RABBITMQ MESSAGE BROKER SETTINGS
-		$publishExchange = 'frontend_exchange';
+		//      RABBITMQ MESSAGE BROKER SETTINGS TO SEND
+		$publishExchange = 'database_exchange';
 		$exchangeType = 'direct';
-		$signupRK   = 'signup-backend';
+		$signupRK   = 'newUser-frontend';
 
 		$channelSignup = $connectionSignup->channel();
 
@@ -176,8 +176,8 @@ session_start();
 		//      RABBITMQ MESSAGE BROKER SETTINGS
 		$consumeExchange 	= 'database_exchange';	// Exchange Name
                 $exchangeType		= 'direct';		// Exchange Type
-		$frontendQueue	 	= 'signup_mailbox';	// Queue Name
-                $signupBK 		= 'signup-frontend';	// BINDING KEY MATCHES PUBLSIHER'S ROUTING KEY
+		$frontendQueue	 	= 'FE_signup_mailbox';	// Queue Name
+                $signupBK 		= 'newUser-Frontend';	// BINDING KEY MATCHES PUBLSIHER'S ROUTING KEY
 
 		//	OPENING CHANNEL TO COMMUNICATE
             	$channelValidSignup = $connectionValidSignup->channel();

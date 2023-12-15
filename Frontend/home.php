@@ -311,8 +311,8 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
 		//      RABBITMQ MESSAGE BROKER SETTINGS
                 $consumeExchange = 'database_exchange';	// Exchange Name
                 $exchangeType 	 = 'direct';		// Exchange Type
-		$queueName	 = 'feedback_mailbox';	// Queue Name
-                $homeBK 	 = 'feedback-frontend';	// BINDING KEY ADDRESS: Matches publisher's routing key
+		$queueName	 = 'FE_feedback_mailbox';	// Queue Name
+                $homeBK 	 = 'feedback-frontend';	// BINDING KEY MATCHES FEEDBACK DATABASE ROUTING KEY
 
 
 		$successFeedbackChannel = $successFeedbackConnection->channel();

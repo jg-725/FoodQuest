@@ -38,10 +38,10 @@ if (!$mainBackendConnection) {
 	die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 }
 
-//      RABBITMQ MESSAGE BROKER SETTINGS
+//      RABBITMQ MESSAGE BROKER SETTINGS TO RECEIVE
 $consumerExchange 	= 'frontend_exchange';	// Exchange Name
 $exchangeType 		= 'direct';		// Exchange Type
-$backendQueue	 	= 'hash_mailbox';	// Queue Name
+$backendQueue	 	= 'BE_signup_mailbox';	// Queue Name
 $hashBK   		= 'signup-backend';	// BINDING KEY MATCHES SIGNUP ROUTING KEY
 
 
@@ -216,7 +216,7 @@ while (true) {
 		$mainBackendChannel->basic_qos(null, 1, false);
 
 		//	MAIN CHANNEL TO CONSUME MESSAGES FROM FRONTEND
-		$mainBackendChannel->basic_consume($backendQueue, '', false, true, false, false, $callback);
+		$mainBackendChannel->basic_consume($backendQueue, '', false, true, false, false, $hashCallback);
 
 		//	TODO: CREATE FUNCTION OR LOOP TO ACTIVE LISTEN FOR MESSAGES FROM FRONTEND
 

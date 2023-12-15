@@ -9,18 +9,21 @@ use PhpAmqpLib\Message\AMQPMessage;
 //	-- SECTION TO RECEIVE MESSAGES FOR PROCESSING --
 
 //      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-$connectionDB = null;
+$DBRegisterConnection = null;
 $rabbitNodes = array('192.168.194.2', '192.168.194.1');
+$port = 5672;
+$user = 'foodquest';
+$pass = 'rabbit123';
 
 foreach ($rabbitNodes as $node) {
 	try {
-        	$connectionDB = new AMQPStreamConnection(
-							$node,
-							5672,
-							'foodquest',
-							'rabbit123'
+        	$DBRegisterConnection = new AMQPStreamConnection(
+						$node,
+						$port,
+						$user,
+						$pass
 		);
-		echo "SIGNUP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+		echo "DATABASE SIGNUP CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n\n";
 		break;
 	} catch (Exception $e) {
 		echo "ERROR: RABBITMQ CONNECTION WAS UNSUCCESSFUL @ $node\n";
@@ -28,51 +31,54 @@ foreach ($rabbitNodes as $node) {
 	}
 }
 
-if (!$connectionDB) {
+if (!$DBRegisterConnection) {
 	die("RABBITMQ CONNECTION ERROR: DATABASE COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 }
 
 //	TODO: ADD RabbitMQ CHANNEL connection settings
 
+//      RABBITMQ MESSAGE BROKER SETTINGS
+$consumeExchange 	= 'backend_exchange';	// Exchange Name
+$exchangeType 		= 'direct';		// Exchange Type
+$databaseQueue	 	= 'DB_signup_mailbox';	// Queue Name
+$databaseBK   		= 'hash-database';	// BINDING KEY VALUE MATCHES REGISTER BACKEND ROUTING KEY
 
 
+//	ACTIVING MAIN CHANNEL FOR BACKEND CONNECTION
+$DBRegisterChannel = $DBRegisterConnection->channel();
 
-// CONNECTING TO MAIN RABBITMQ
-//$connectionDB = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
+//	DECLARING DURABLE EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
+$DBRegisterChannel->exchange_declare(
+			$consumeExchange,
+			$exchangeType,
+			false,			// PASSIVE
+			true,			// DURABLE
+			false			// AUTO-DELETE
+);
 
-$channelDB = $connectionDB->channel();
-
-$channelDB->exchange_declare('backend_exchange', 'direct', false, false, false);
-
-// Using DURABLE QUEUES: Third parameter is true
-$channelDB->queue_declare('database_mailbox', false, true, false, false);
-
-// Binding key
-$bindingKeyDB = "database";
+//	USING DURABLE QUEUE FOR WEBSITE: Third parameter is TRUE
+$DBRegisterChannel->queue_declare(
+		$databaseQueue,
+		false,		// PASSIVE: check whether an exchange exists without modifying the server state
+		true,		// DURABLE: the queue will survive a broker restart
+		false,		// EXCLUSIVE: used by only one connection and the queue will be deleted when that connection closes
+		false		// AUTO-DELETE: queue is deleted when last consumer unsubscribes
+);
 
 // Binding three items together to receive msgs
-$channelDB->queue_bind('database_mailbox', 'backend_exchange', $bindingKeyDB);
+$DBRegisterChannel->queue_bind($databaseQueue, $consumeExchange, $databaseBK);
 
 // Terminal message to signal we are waiting for messages from BACKEND
-echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
+echo '[*] Waiting For BACKEND To Send Data. To exit press CTRL+C', "\n\n";
 
-$callbackDB = function ($msg) use ($channelDB) {
-	echo '[+] RECEIVED HASHED PASSWORD FROM BACKEND', "\n\n";
+$callbackDB = function ($hashMsg) use ($DBRegisterChannel) {
+	//echo '[+] RECEIVED HASHED PASSWORD FROM BACKEND', "\n\n";
 
-    	$backendMsg = json_decode($msg->getBody(), true);
+    	$backendMsg = json_decode($hashMsg->getBody(), true);
 
 	print_r($backendMsg);
 
-	/*
-    // GETTING VARIABLES SENT FROM BACKEND
-    $validUser = filter_var($backendMsg['username'], FILTER_SANITIZE_STRING);
-    $validPass = filter_var($backendMsg['password'], FILTER_SANITIZE_STRING);
-    $validFirst = filter_var($backendMsg['first'], FILTER_SANITIZE_STRING);
-    $validLast = filter_var($backendMsg['last'], FILTER_SANITIZE_STRING);
-    $validEmail = filter_var($backendMsg['email'], FILTER_SANITIZE_STRING);
-    $validAddress = filter_var($backendMsg['address'], FILTER_SANITIZE_STRING);
-    $validPhone = filter_var($backendMsg['phone'], FILTER_SANITIZE_STRING);
-	*/
+	echo '[+] RECEIVED HASHED PASSWORD FROM BACKEND', "\n\n";
 
     //    GETTING VARIABLES SENT FROM BACKEND
     $validUser   = $backendMsg['username'];
@@ -101,11 +107,9 @@ $callbackDB = function ($msg) use ($channelDB) {
     	$regexUser = preg_match('/^[a-zA-Z0-9_]+$/', $stringUser);
 	//	USERNAME REGEX
 	if (preg_match('/^[a-zA-Z0-9_]+$/', $stringUser)) {
-		echo "VALID USERNAME";
 		$checkValues['user'] = 'VALID USERNAME';
 	}
 	else {
-		echo "WRONG USERNAME";
 		$checkValues['user'] = 'WRONG USERNAME';
 	}
 
@@ -113,11 +117,9 @@ $callbackDB = function ($msg) use ($channelDB) {
     	$strong_password = "/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/";
     	$regexPass = preg_match($strong_password, $stringPass);
         if (preg_match($strong_password, $stringPass)) {
-                echo "VALID PASSWORD";
 		$checkValues['pass'] = 'VALID PASSWORD';
         }
         else {
-                echo "WRONG PASSWORD";
 		$checkValues['pass'] = 'WRONG PASSWORD';
         }
 
@@ -125,11 +127,9 @@ $callbackDB = function ($msg) use ($channelDB) {
     	$regexFirst = preg_match('/^[a-zA-Z]+$/', $stringFirst);
 
         if (preg_match('/^[a-zA-Z]+$/', $stringFirst)) {
-                echo "VALID FIRST NAME";
 		$checkValues['first'] = 'VALID FIRST NAME';
         }
         else {
-                echo "WRONG FIRST NAME";
 		$checkValues['first'] = 'WRONG FIRST NAME';
         }
 
@@ -137,11 +137,9 @@ $callbackDB = function ($msg) use ($channelDB) {
     	$regexLast = preg_match('/^[a-zA-Z]+$/', $stringLast);
 
         if (preg_match('/^[a-zA-Z]+$/', $stringLast)) {
-                echo "VALID LAST NAME";
 		$checkValues['last'] = 'VALID LAST NAME';
         }
         else {
-                echo "WRONG LAST NAME";
 		$checkValues['last'] = 'WRONG LAST NAME';
         }
 
@@ -150,11 +148,9 @@ $callbackDB = function ($msg) use ($channelDB) {
     	$regexEmail = preg_match($strong_email, $stringEmail);
 
         if (preg_match($strong_email, $stringEmail)) {
-                echo "VALID EMAIL";
 		$checkValues['email'] = 'VALID EMAIL';
         }
         else {
-                echo "WRONG EMAIL";
 		$checkValues['email'] = 'WRONG EMAIL';
         }
 
@@ -164,11 +160,10 @@ $callbackDB = function ($msg) use ($channelDB) {
     	$regexAddress = preg_match($valid_address_regex, $stringAddress);
 
         if (preg_match($valid_address_regex, $stringAddress)) {
-                echo "VALID ADDRESS";
+
 		$checkValues['address'] = 'VALID ADDRESS';
         }
         else {
-                echo "WRONG ADDRESS";
 		$checkValues['address'] = 'WRONG ADDRESS';
         }
 
@@ -177,11 +172,10 @@ $callbackDB = function ($msg) use ($channelDB) {
     	$regexPhone = preg_match($valid_phone_regex, $stringPhone);
 
         if (preg_match($valid_phone_regex, $stringPhone)) {
-                echo "VALID PHONE NUMBER";
+
 		$checkValues['phone'] = 'VALID PHONE NUMBER';
         }
         else {
-                echo "WRONG PHONE NUMBER";
 		$checkValues['phone'] = 'WRONG PHONE NUMBER';
         }
 
@@ -240,18 +234,21 @@ $callbackDB = function ($msg) use ($channelDB) {
         /* PROCESS TO SEND USER EXISTS MESSAGE TO FRONTEND - RABBITMQ */
 
 	//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-	$existsConnection = null;
-	$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+	$newUserConnection = null;
+		$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+		$port = 5672;
+                $user = 'foodquest';
+                $pass = 'rabbit123';
 
 	foreach ($rabbitNodes as $node) {
 		try {
-            		$existsConnection = new AMQPStreamConnection(
+            		$newUserConnection = new AMQPStreamConnection(
 								$node,
-								5672,
-								'foodquest',
-								'rabbit123'
+								$port,
+								$user,
+								$pass'
 			);
-			echo "SIGNUP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
+			echo "DATABASE REGISTRATION CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
 			break;
 		} catch (Exception $e) {
 			echo "ERROR: RABBITMQ CONNECTION WAS UNSUCCESSFUL @ $node\n";
@@ -262,17 +259,25 @@ $callbackDB = function ($msg) use ($channelDB) {
         // ESTABLISHING CONNECTION
         //$existsConnection = new AMQPStreamConnection('192.168.194.2', 5672, 'foodquest', 'rabbit123');
 
-        if (!$existsConnection) {
+        if (!$newUserConnection) {
                 die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
         }
 
-        $existsChannel = $existsConnection->channel();
+	//      RABBITMQ MESSAGE BROKER SETTINGS TO SEND MESSAGES
+	$publishExchange = 'database_exchange'; // Exchange Name
+	$exchangeType 	 = 'direct'; 		// Exchange Type 
+	$newUserRK 	 = 'newUser-Frontend';  // ROUTING KEY TO DETERMINE DESTINATION
 
-        // EXCHANGE THAT WILL ROUTE DATABASE MESSAGES
-        $existsChannel->exchange_declare('database_exchange', 'direct', false, false, false);
+        $newUserChannel = $newUserConnection->channel();
 
-        // Routing key address so RabbitMQ knows where to send the message
-        $returnToFrontend = "frontend";
+        // EXCHANGE THAT WILL ROUTE MESSAGES TO FRONTEND
+        $newUserChannel->exchange_declare(
+			$publishExchange,
+			$exchangeType,
+			false,		// PASSIVE
+			true,		// DURABLE
+			false		// AUTO-DELETE
+	);
 
         // ARRAY TO STORE MESSAGE
         $returnMsg = [
@@ -284,10 +289,16 @@ $callbackDB = function ($msg) use ($channelDB) {
         $encodedMsg = json_encode($returnMsg);
 
         // Getting message ready for delivery
-        $existsMessage = new AMQPMessage($encodedMsg, array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT));
+        $regexMessage = new AMQPMessage(
+				$encodedMsg,
+				array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT));
 
-        // Publishing message to FRONTEND via queue
-        $existsChannel->basic_publish($existsMessage, 'database_exchange', $returnToFrontend);
+        // Publishing message to DATABASE EXCHANGE FOR ROUTING
+        $newUserChannel->basic_publish(
+				$existsMessage,
+				$publishExchange,
+				$newUserRK
+	);
 
         // Command line message
         echo '[@] REGEX AND MYSQL PROTOCOLS WERE EXECUTED [@]', "\n--RETURN MESSAGE SENT TO FRONTEND--\n";
@@ -295,8 +306,8 @@ $callbackDB = function ($msg) use ($channelDB) {
         print_r($returnMsg); // Displaying array in command line
 
         // CLOSING CHANNEL AND CONNECTION TALKING TO FRONTEND
-        $existsChannel->close();
-        $existsConnection->close();
+        $newUserChannel->close();
+        $newUserConnection->close();
     }
 
     // SENDING REGEX ERROR MESSAGE TO FRONTEND
@@ -304,6 +315,9 @@ $callbackDB = function ($msg) use ($channelDB) {
 
 	$regexConnection = null;
 	$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
+	$port = 5672;
+        $user = 'foodquest';
+        $pass = 'rabbit123';
 
 	//	TODO: LOOP THROUGH ARRAY TO SEND DATA TO WORKING NODE
 
@@ -311,9 +325,9 @@ $callbackDB = function ($msg) use ($channelDB) {
                 try {
                         $regexConnection = new AMQPStreamConnection(
                                                                 $node,
-                                                                5672,
-                                                                'foodquest',
-                                                                'rabbit123'
+                                                                $port,
+                                                                $user,
+                                                                $pass
                         );
                         echo "SIGNUP CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
                         break;
@@ -330,13 +344,22 @@ $callbackDB = function ($msg) use ($channelDB) {
         	die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
         }
 
+	//      RABBITMQ MESSAGE BROKER SETTINGS TO SEND MESSAGES
+	$publishExchange 	= 'frontend_exchange';	// Exchange Name
+        $exchangeType		= 'direct';		// Exchange Type
+        $regexRK 		= 'regex-database';	// ROUTING KEY TO DETERMINE DESTINATION
+
+	//	OPENING CHANNEL TO COMMUNITCATE WITH FRONTEND
         $regexChannel = $regexConnection->channel();
 
-        // EXCHANGE THAT WILL ROUTE DATABASE MESSAGES
-        $regexChannel->exchange_declare('database_exchange', 'direct', false, false, false);
-
-        // Routing key address so RabbitMQ knows where to send the message
-        $regexFrontend = "frontend";
+        // EXCHANGE THAT WILL ROUTE MESSAGES TO FRONTEND
+        $regexChannel->exchange_declare(
+			$publishExchange,
+			$exchangeType,
+			false,		// PASSIVE
+			true,		// DURABLE
+			false		// AUTO-DELETE
+		);
 
         $returnMsg = [
             'valid_signup' => 'FALSE',
@@ -346,10 +369,15 @@ $callbackDB = function ($msg) use ($channelDB) {
         $invalidEncodedRegex = json_encode($returnMsg);
 
         // Getting message ready for delivery
-        $regexMessage = new AMQPMessage($invalidEncodedRegex, array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT));
+        $regexMessage = new AMQPMessage(
+				$invalidEncodedRegex,
+				array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT));
 
         // Publishing regex message to exchange via routing key
-        $regexChannel->basic_publish($regexMessage, 'database_exchange', $regexFrontend);
+        $regexChannel->basic_publish(
+				$regexMessage,
+				$publishExchange,
+				$regexRK);
 
         // Command line message
         echo '[@] REGEX CHECK PROTOCOL ACTIVATED [@]', "\n\n[x] SIGNUP INPUT DOES NOT MEET SITE REQUIREMENTS\n";
@@ -364,12 +392,12 @@ $callbackDB = function ($msg) use ($channelDB) {
 
 while (true) {
 	try {
-		$channelDB->basic_qos(null, 1, false);
-		$channelDB->basic_consume('database_mailbox', '', false, true, false, false, $callbackDB);
+		$DBRegisterChannel->basic_qos(null, 1, false);
+		$DBRegisterChannel->basic_consume($databaseQueue, '', false, true, false, false, $callbackDB);
 
-		while(count($channelDB->callbacks)) {
-       			$channelDB->wait();
-			echo 'NO MORE INCOMING MESSAGES FROM BACKEND', "\n\n";
+		while(count($DBRegisterChannel->callbacks)) {
+       			$DBRegisterChannel->wait();
+			echo 'NO MORE INCOMING REGISTER REQUESTS FROM BACKEND', "\n\n";
 			break;
 		}
 	}
@@ -380,8 +408,8 @@ while (true) {
 }
 
 //	Closing MAIN channel and connection
-$channelDB->close();
-$connectionDB->close();
+$DBRegisterChannel->close();
+$DBRegisterConnection->close();
 
 ?>
 

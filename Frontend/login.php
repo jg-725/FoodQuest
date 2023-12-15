@@ -180,11 +180,11 @@ if (isset($_SESSION['username']) && isset($_SESSION["userID"])) {
                         die("CONNECTION ERROR: FRONTEND COULD NOT CONNECT TO RABBITMQ NODE.");
                 }
 
-		//      RABBITMQ MESSAGE BROKER SETTINGS
-                $consumeExchange = 'database_exchange';	// Exchange Name
-                $exchangeType 	 = 'direct';		// Exchange Type
-		$queueName	 = 'login_mailbox';	// Queue Name
-                $loginBK 	 = 'login-frontend';	// BINDING KEY
+		//      RABBITMQ MESSAGE BROKER SETTINGS TO RECEIVE
+                $consumeExchange = 'database_exchange';		// Exchange Name
+                $exchangeType 	 = 'direct';			// Exchange Type
+		$queueName	 = 'FE_login_mailbox';		// Queue Name
+                $loginBK 	 = 'userExists-frontend';	// BINDING KEY MATCHES LOGIN DATABASE ROUTING KEY
 
 
                 $channelReceiveDatabase = $connectionReceiveDatabase->channel();
