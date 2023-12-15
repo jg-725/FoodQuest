@@ -112,7 +112,7 @@ $callback = function ($userFeedback) use ($feedbackBackendChannel) {
 									$node,
 									$port,
 									$user,
-									$pass'
+									$pass
 				);
 				echo "BACKEND FEEDBACK CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n\n";
 				break;
