@@ -293,7 +293,7 @@ $callbackDB = function ($hashMsg) use ($DBRegisterChannel) {
 
         // Publishing message to DATABASE EXCHANGE FOR ROUTING
         $newUserChannel->basic_publish(
-				$existsMessage,
+				$regexMessage,
 				$publishExchange,
 				$newUserRK
 	);
