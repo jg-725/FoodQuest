@@ -1,7 +1,7 @@
 <?php
 
 
-/*      RECEIVING PROCESSED USER FEEDBACK FROM BACKEND       */
+/*      FINAL DELIVERABLE: RECEIVING PROCESSED USER FEEDBACK FROM BACKEND       */
 
 
 //      AMQP LIBRARIES
@@ -11,60 +11,74 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 
 //      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-$feedbackDatabaseConnection = null;
-$rabbitmqNodes = array('192.168.194.2', '192.168.194.1');
-
+$DBFeedbackConnection = null;
+$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+$port = 5672;
+$user = 'foodquest';
+$pass = 'rabbit123';
 
 foreach ($rabbitNodes as $node) {
 	try {
-        	$feedbackDatabaseConnection = new AMQPStreamConnection(
+        	$DBFeedbackConnection = new AMQPStreamConnection(
 							$node,
-							5672,
-							'foodquest',
-							'rabbit123'
+							$port,
+							$user,
+							$pass
 		);
-		echo "DATABASE CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+		echo "DATABASE FEEDBACK CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
 		break;
 	} catch (Exception $e) {
 		continue;
 	}
 }
 
-if (!$feedbackDatabaseConnection) {
+if (!$DBFeedbackConnection) {
 	die("CONNECTION ERROR: DATABASE COULD NOT CONNECT TO ANY RABBITMQ NODE.");
 }
 
-// RabbitMQ channel connection settings
-$exchangeName = 'backend_exchange';
-$queueName = 'database_feedback';
-$exchangeType = 'direct';
-$feedbackDBkey = 'databaseFeedback';
+//      RABBITMQ MESSAGE BROKER SETTINGS
+$consumeExchange        = 'backend_exchange';   // Exchange Name
+$exchangeType           = 'direct';             // Exchange Type
+$databaseQueue          = 'DB_feedback_mailbox';  // Queue Name
+$feedbackBK             = 'feedback-database';    // BINDING KEY VALUE MATCHES REGISTER BACKEND ROUTING KEY
 
 
-// 	EXCHANGE THAT WILL ROUTED MESSAGES COMING FROM BACKEND
-$channelDB->exchange_declare(
-			$exchangeName,
+//      ACTIVING MAIN CHANNEL FOR BACKEND CONNECTION
+$DBFeedbackChannel = $DBFeedbackConnection->channel();
+
+// 	DECLARING DURABLE EXCHANGE THAT WILL ROUTE MESSAGES FROM BACKEND
+$DBFeedbackChannel->exchange_declare(
+			$consumeExchange,
 			$exchangeType,
 			false,
 			true,		// DURABLE
 			false		// AUTO-DELETE
 );
 
-// 	Using DURABLE QUEUES FOR DELIVERY: Third parameter is TRUE
-$channelDB->queue_declare($queueName, false, true, false, false);
+//      USING DURABLE QUEUE FOR WEBSITE: Third parameter is TRUE
+$DBFeedbackChannel->queue_declare(
+                $databaseQueue,
+                false,          // PASSIVE: check whether an exchange exists without modifying the server state
+                true,           // DURABLE: the queue will survive a broker restart
+                false,          // EXCLUSIVE: used by only one connection and the queue will be deleted when that connection closes
+                false           // AUTO-DELETE: queue is deleted when last consumer unsubscribes
+);
 
-// 	Binding three items together to receive msgs
-$channelDB->queue_bind($queueName, $exchangeName, $feedbackDBkey);
+// Binding three items together to receive msgs
+$DBLoginChannel->queue_bind($databaseQueue, $consumeExchange, $feedbackBK);
+
 
 // 	Terminal message to signal we are waiting for messages from BACKEND
 echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 
 // CALLBACK RESPONSIBLE FOR PROCESSING INCOMING MESSAGES
-$callback = function ($backendMsg) use ($channel) {
-
-	echo '[+] RECEIVED PROCESSED USER FEEDBACK FROM BACKEND', "\n", $msg->getBody(), "\n\n";
+$callbackDBFeedback = function ($backendMsg) use ($DBLoginChannel) {
 
     	$unloadMsg = json_decode($backendMsg->getBody(), true);
+
+	print_r($unloadMsg);
+
+	echo '[+] RECEIVED PROCESSED USER FEEDBACK FROM BACKEND', "\n", $msg->getBody(), "\n\n";
 
     	//    GETTING VARIABLES SENT FROM BACKEND
 	$userID = $unloadMsg['userID'];
@@ -91,7 +105,7 @@ $callback = function ($backendMsg) use ($channel) {
 
 
 	// Insert the user data into the database
-	$sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating')";
+	$sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating') WHERE id = $userID";
 
 	if (mysqli_query($conn, $sql)) {
     		echo "USER FEEDBACK WAS STORED IN FOODQUEST DATABASE";
@@ -108,19 +122,23 @@ $callback = function ($backendMsg) use ($channel) {
 
 
 
-	/* PROCESS TO SEND SUCCESSFUL FEEDBACK MESSAGE TO FRONTEND - RABBITMQ */
+	/////////////////	PROCESS TO SEND SUCCESSFUL FEEDBACK MESSAGE TO FRONTEND - RABBITMQ	///////////////////
+
 
 	//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
 	$messageConnection = null;
 	$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+	$port = 5672;
+        $user = 'foodquest';
+        $pass = 'rabbit123';
 
 	foreach ($rabbitNodes as $node) {
 		try {
             		$messageConnection = new AMQPStreamConnection(
 								$node,
-								5672,
-								'foodquest',
-								'rabbit123'
+								$port,
+								$user,
+								$pass
 			);
 			echo "FEEDBACK DATABASE CONNECTION TO RABBITMQ WAS SUCCESSFUL @ $node\n";
 			break;
@@ -134,13 +152,21 @@ $callback = function ($backendMsg) use ($channel) {
                 die("CONNECTION ERROR: COULD NOT CONNECT TO RABBITMQ NODE.");
         }
 
+	 //      RABBITMQ MESSAGE BROKER SETTINGS TO SEND MESSAGES
+        $publishExchange        = 'database_exchange';  // Exchange Name
+        $exchangeType           = 'direct';             // Exchange Type
+        $successRK              = 'feedback-frontend';   // ROUTING KEY TO DETERMINE DESTINATION
+
 	$messageChannel = $messageConnection->channel();
 
         // EXCHANGE THAT WILL ROUTE DATABASE MESSAGES
-        $messageChannel->exchange_declare('database_exchange', 'direct', false, false, false);
-
-        // Routing key address so RabbitMQ knows where to send the message
-        $reviewDatabase = "frontend";
+        $messageChannel->exchange_declare(
+                        $publishExchange,
+                        $exchangeType,
+                        false,          // PASSIVE
+                        true,           // DURABLE
+                        false           // AUTO-DELETE
+        );
 
 	$reviewOutcome = [
         		'message' => $result,
@@ -155,7 +181,11 @@ $callback = function ($backendMsg) use ($channel) {
 				array('delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT));
 
 	// Publishing message to FRONTEND via queue
-        $messageChannel->basic_publish($rabbitMessage, 'database_exchange', $reviewDatabase);
+        $messageChannel->basic_publish(
+				$rabbitMessage,
+				$publishExchange,
+				$successRK
+	);
 
 	// Command line message
         echo '[@] MYSQL PROTOCOLS WERE EXECUTED [@]', "\n--RETURN MESSAGE SENT TO FRONTEND--\n";
@@ -171,11 +201,11 @@ $callback = function ($backendMsg) use ($channel) {
 
 while (true) {
 	try {
-		$channelDB->basic_qos(null, 1, false);
-		$channelDB->basic_consume($queueName, '', false, true, false, false, $callbackDB);
+		$DBFeedbackChannel->basic_qos(null, 1, false);
+		$DBFeedbackChannel->basic_consume($databaseQueue, '', false, true, false, false, $callbackDBFeedback);
 
-		while(count($channelDB->callbacks)) {
-       			$channelDB->wait();
+		while (count($DBFeedbackChannel->callbacks)) {
+       			$DBFeedbackChannel->wait();
 			echo 'NO MORE INCOMING MESSAGES FROM BACKEND', "\n\n";
 			break;
 		}
@@ -187,8 +217,8 @@ while (true) {
 }
 
 //	Closing MAIN channel and connection
-$channelDB->close();
-$$feedbackDatabaseConnection->close();
+$DBFeedbackChannel->close();
+$DBFeedbackConnection->close();
 
 
 ?>

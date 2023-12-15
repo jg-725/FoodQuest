@@ -10,55 +10,69 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 
 //      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-$connection = null;
+$feedbackBackendConnection = null;
 $rabbitNodes = array('192.168.194.2', '192.168.194.1');
+$port = 5672;
+$user = 'foodquest';
+$pass = 'rabbit123';
+
 
 foreach ($rabbitNodes as $node) {
-    try {
-        $connection = new AMQPStreamConnection($node,
-						5672,
-						'foodquest',
-						'rabbit123'
-	);
-        echo "BACKEND CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
-        break;
-    } catch (Exception $e) {
-        continue;
-    }
+	try {
+        	$feedbackBackendConnection = new AMQPStreamConnection(
+						$node,
+						$port,
+						$user,
+						$pass
+		);
+		echo "BACKEND FEEDBACK CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+		break;
+	} catch (Exception $e) {
+		continue;
+	}
 }
 
-if (!$connection) {
-    die("BACKEND CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE");
+if (!$feedbackBackendConnection) {
+	die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 }
 
-$exchangeName = 'frontend_exchange';	// Exhchange Name
-$exchangeType = 'direct';
-$queueName = 'backend_feedback';	// Queue Name
-$backend_key = 'backendReview';		// Binding Key
+
+//      RABBITMQ MESSAGE BROKER SETTINGS TO CONSUME MESSAGES
+$consumerExchange 	= 'frontend_exchange';		// Exchange Name
+$exchangeType 		= 'direct';			// Exchange Type
+$backendQueue	 	= 'BE_feedback_mailbox';	// Queue Name
+$feedbackBK   		= 'feedback-backend';		// BINDING KEY MATCHES SIGNUP ROUTING KEY
+
 
 //      ACTIVING MAIN API CHANNEL TO PROCESS FRONTEND REQUESTS
-$channel = $connection->channel();
+$feedbackBackendChannel = $feedbackBackendConnection->channel();
 
-//      DECLARING EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
-$channel->exchange_declare(
-			$exchangeName,
+//      DECLARING DURABLE EXCHANGE THAT WILL ROUTE MESSAGES FROM FRONTEND
+$feedbackBackendChannel->exchange_declare(
+			$consumerExchange,
 			$exchangeType,
-			false,	// PASSIIVE
-			true,	// DURABLE
-			false	//AUTO-DELETE
+			false,			// PASSIVE
+			true,			// DURABLE
+			false			// AUTO-DELETE
 );
 
 //      DURABLE QUEUE ONLY FOR USER FEEDBACK/REVIEW : Third parameter is TRUE
-$channel->queue_declare($queueName, false, true, false, false);
+$feedbackBackendChannel->queue_declare(
+		$backendQueue,
+		false,		// PASSIVE: check whether an exchange exists without modifying the server state
+		true,		// DURABLE: the queue will survive a broker restart
+		false,		// EXCLUSIVE: used by only one connection and the queue will be deleted when that connection closes
+		false		// AUTO-DELETE: queue is deleted when last consumer unsubscribes
+);
 
 // Binding three items together to receive msgs
-$channel->queue_bind($queueName, $exchangeName, $backend_key);
+$feedbackBackendChannel->queue_bind($backendQueue, $consumerExchange, $feedbackBK);
 
 // Terminal message to signal we are waiting for messages from frontend
 echo '[*] WAITING FOR FRONTEND TO SEND USER FEEDBACK DATA. To exit press CTRL+C', "\n\n";
 
 //	CALLBACK RESPONSIBLE OF PROCESSESSING API REQUESTS
-$callback = function ($userFeedback) use ($channel) {
+$callback = function ($userFeedback) use ($feedbackBackendChannel) {
 
 	echo '[+] RECEIVED USER FEEDBACK FROM FRONTEND',"\n\n";
 	$incomingData = json_decode($userFeedback->getBody(), true);
@@ -82,43 +96,57 @@ $callback = function ($userFeedback) use ($channel) {
 	$sendFeedback = json_encode($consumeFeedback);
 
 
-	/*	PROCESS TO CONNECT TO RABBITMQ		*/
+	////////	PROCESS TO CONNECT TO RABBITMQ		*/
+
 
 	//      IMPLEMENTING RABBITMQ FAIL OVER CONNECTION
-	$backendFeedbackConnection = null;
+	$sendFeedbackConnection = null;
 	$rabbitNodes = array('192.168.194.2', '192.168.194.1');
+	$port = 5672;
+        $user = 'foodquest';
+        $pass = 'rabbit123';
 
-		foreach ($rabbitNodes as $node) {
+	foreach ($rabbitNodes as $node) {
 			try {
-            			$backendFeedbackConnection = new AMQPStreamConnection(
-								$node,
-								5672,
-								'foodquest',
-								'rabbit123'
+            			$sendFeedbackConnection = new AMQPStreamConnection(
+									$node,
+									$port,
+									$user,
+									$pass'
 				);
-				echo "BACKEND FEEDBACK CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n";
+				echo "BACKEND FEEDBACK CONNECTION TO RABBITMQ CLUSTER WAS SUCCESSFUL @ $node\n\n";
 				break;
 			} catch (Exception $e) {
 				continue;
 			}
 
-		}
+	}
 
 		//	CONNECTION TO MAIN RABBIT NODE - PRE CLUSTER
 		//$passwordConnection = new AMQPStreamConnection('192.168.194.2',5672,'foodquest','rabbit123');
 
-		if (!$backendFeedbackConnection) {
+		if (!$sendFeedbackConnection) {
         		die("CONNECTION ERROR: COULD NOT CONNECT TO ANY RABBITMQ NODE IN CLUSTER.");
 		}
 
+		//      RABBITMQ MESSAGE BROKER SETTINGS TO SEND MESSAGES
+		$publishExchange 	= 'backend_exchange';	// Exchange Name
+                $exchangeType		= 'direct';		// Exchange Type
+                $feedbackRK 		= 'feedback-database';	// ROUTING KEY TO DETERMINE DESTINATION
+
+
 		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE
-		$backendFeedbackChannel = $backendFeedBackConnection->channel();
+		$sendFeedbackChannel = $sendFeedBackConnection->channel();
+
 
 		//	EXCHANGE THAT WILL ROUTE MESSAGES TO DATABASE
-		$backendFeedbackChannel->exchange_declare('backend_exchange', 'direct', false, false, false);
-
-		//	ROUTING KEY TO DETERMINE DESTINATION
-		$review_backend = 'database';
+		$sendFeedbackChannel->exchange_declare(
+			$publishExchange,
+			$exchangeType,
+			false,		// PASSIVE
+			true,		// DURABLE
+			false		// AUTO-DELETE
+		);
 
 		//	Getting message ready for delivery
 		$reviewMessage = new AMQPMessage(
@@ -127,18 +155,18 @@ $callback = function ($userFeedback) use ($channel) {
 		);
 
 		// 	Publishing message to frontend via queue
-        	$backendFeedbackChannel->basic_publish(
+        	$sendFeedbackChannel->basic_publish(
 					$reviewMessage,
-					'backend_exchange',
-					$hash_key
+					$publishExchange,
+					$feedbackRK
 		);
 
 		//	COMMAND RESPONSE TO SIGNAL MSG WAS PROCESSES AND SENT
 		echo '[@] BACKEND PROTOCOL ACTIVATED [@]', "\nMESSAGE TO DATABASE\n";
 		print_r($consumeFeedback);
 
-		$backendFeedbackChannel->close();
-        	$backendFeedbackConnection->close();
+		$sendFeedbackChannel->close();
+        	$sendFeedbackConnection->close();
 };
 
 
@@ -146,15 +174,15 @@ while (true) {
 	try {
 
 		// 	MAIN CHANNEL QUALITY CONTROL
-		$channel->basic_qos(null, 1, false);
+		$feedbackBackendChannel->basic_qos(null, 1, false);
 
 		//	MAIN CHANNEL TO CONSUME MESSAGES FROM FRONTEND
-		$channel->basic_consume($queueName, '', false, true, false, false, $callback);
+		$feedbackBackendChannel->basic_consume($backendQueue, '', false, true, false, false, $callback);
 
 		//	TODO: CREATE FUNCTION OR LOOP TO ACTIVE LISTEN FOR MESSAGES FROM FRONTEND
 
-		while(count($channel->callbacks)) {
-       			$channel->wait();
+		while (count($feedbackBackendChannel->callbacks)) {
+       			$feedbackBackendChannel->wait();
 			echo 'NO MORE INCOMING MESSAGES', "\n\n";
 			break;
 		}
@@ -166,8 +194,8 @@ while (true) {
 
 
 //	CLOSING MAIN CHANNEL AND CONNECTION
-$channel->close();
-$connection->close();
+$feedbackBackendChannel->close();
+$feedbackBackendConnection->close();
 
 
 ?>
