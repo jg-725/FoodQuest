@@ -65,14 +65,14 @@ $DBFeedbackChannel->queue_declare(
 );
 
 // Binding three items together to receive msgs
-$DBLoginChannel->queue_bind($databaseQueue, $consumeExchange, $feedbackBK);
+$DBFeedbackChannel->queue_bind($databaseQueue, $consumeExchange, $feedbackBK);
 
 
 // 	Terminal message to signal we are waiting for messages from BACKEND
 echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 
 // CALLBACK RESPONSIBLE FOR PROCESSING INCOMING MESSAGES
-$callbackDBFeedback = function ($backendMsg) use ($DBLoginChannel) {
+$callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
     	$unloadMsg = json_decode($backendMsg->getBody(), true);
 
