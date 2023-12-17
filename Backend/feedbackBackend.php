@@ -136,7 +136,7 @@ $callback = function ($userFeedback) use ($feedbackBackendChannel) {
 
 
 		//	OPENING CHANNEL TO COMMUNITCATE WITH DATABASE
-		$sendFeedbackChannel = $sendFeedBackConnection->channel();
+		$sendFeedbackChannel = $sendFeedbackConnection->channel();
 
 
 		//	EXCHANGE THAT WILL ROUTE MESSAGES TO DATABASE
