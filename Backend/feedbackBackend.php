@@ -89,7 +89,7 @@ $callback = function ($userFeedback) use ($feedbackBackendChannel) {
 	if (empty($consumeFeedback)) {
 		$consumeFeedback['userID'] = $userID;
 		$consumeFeedback['message'] = $userComment;
-		$consumeFeedBack['rating'] = $userRating;
+		$consumeFeedback['rating'] = $userRating;
 	}
 
 	//	ENCODING ARRAY INTO JSON FOR DELIVERY
