@@ -78,7 +78,7 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
 	print_r($unloadMsg);
 
-	echo '[+] RECEIVED PROCESSED USER FEEDBACK FROM BACKEND', "\n", $msg->getBody(), "\n\n";
+	echo '[+] RECEIVED PROCESSED USER FEEDBACK FROM BACKEND', "\n", $backendMsg->getBody(), "\n\n";
 
     	//    GETTING VARIABLES SENT FROM BACKEND
 	$userID = $unloadMsg['userID'];
