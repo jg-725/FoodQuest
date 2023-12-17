@@ -187,7 +187,9 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
 	
 	<?php
 /*		RABBITMQ CODE TO SEND USER FEEDBACK TO BACKEND		*/
-	require_once __DIR__ . '/vendor/autoload.php';
+
+	// Required PHP and AMQP Libraries to interact with RabbitMQ
+        require_once '/var/www/gci/FrontEnd/vendor/autoload.php';
 	use PhpAmqpLib\Connection\AMQPStreamConnection;
         use PhpAmqpLib\Message\AMQPMessage;
 
