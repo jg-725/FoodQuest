@@ -92,7 +92,7 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
 
 	/*	ENTER MYSQL CODE HERE	*/
-		
+
 	$servername = "192.168.194.3";
  		   $username_db = "test";
    		 $password_db = "test";
@@ -105,7 +105,9 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
 
 	// Insert the user data into the database
-	$sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating') WHERE id = $userID";
+	$sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating');
+
+	//WHERE id = $userID"
 
 	if (mysqli_query($conn, $sql)) {
     		echo "USER FEEDBACK WAS STORED IN FOODQUEST DATABASE";
