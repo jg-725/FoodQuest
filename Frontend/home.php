@@ -354,12 +354,16 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
 			$feedbackCheck = $decodedMsg['message'];
 
 			// REDIRECT TO DISPLAY SUCCESSFUL FEEDBACK PAGE
-			if ($feedbackCheck == 'SUCCESS') {
-				echo "<script>alert('YOUR FEEDBACK WAS SENT TO FOODQUEST!');</script>";
+			if ($feedbackCheck = 'TRUE') {
+			
+	echo "<script>alert('YOUR FEEDBACK WAS SENT TO FOODQUEST!');</script>";
 				header("Location: commentReg.php");
+				
 			}
 			else {
-				echo "<script>alert('ERROR IS PROCESSING YOUR FEEDBACK, PLEASE TRY AGAIN');</script>";
+			echo "<script>alert('ERROR IS PROCESSING YOUR FEEDBACK, PLEASE TRY AGAIN');</script>";
+			//die(header("Location: commentReg.php"));
+			
 			}
 		};
 
