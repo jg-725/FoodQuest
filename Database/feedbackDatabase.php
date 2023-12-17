@@ -111,9 +111,10 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
 	if (mysqli_query($conn, $sql)) {
     		echo "USER FEEDBACK WAS STORED IN FOODQUEST DATABASE";
-    		$result = 'SUCCESS';
+    		$result = 'TRUE';
 	} else {
     		echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+    		$result = 'FALSE';
 	}
 
 	// Close the database connection
