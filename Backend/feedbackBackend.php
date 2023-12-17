@@ -81,14 +81,14 @@ $callback = function ($userFeedback) use ($feedbackBackendChannel) {
 
 	//	GETTING REVIEW DATA
 	$userID = $incomingData['user_id'];
-	$userComment = $incomingData['comment'];
+	$userComment = $incomingData['message'];
 	$userRating = $incomingData['rating'];
 
 	$consumeFeedback = array();
 
 	if (empty($consumeFeedback)) {
 		$consumeFeedback['user_id'] = $userID;
-		$consumeFeedback['comment'] = $userComment;
+		$consumeFeedback['message'] = $userComment;
 		$consumeFeedBack['rating'] = $userRating;
 	}
 

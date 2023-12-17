@@ -82,7 +82,7 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
     	//    GETTING VARIABLES SENT FROM BACKEND
 	$userID = $unloadMsg['userID'];
-    	$comment = $unloadMsg['comment'];
+    	$comment = $unloadMsg['message'];
     	$rating = $unloadMsg['rating'];
 
     	//  	JSON variables to String sanitize

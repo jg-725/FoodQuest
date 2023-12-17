@@ -90,7 +90,7 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
                 
 
                 <!--RD Mailform-->
-                <form class="rd-form rd-mailform" data-form-output="form-output-global" data-form-type="contact" method="POST" action="bat/rd-mailform.php">
+                <form class="rd-form rd-mailform" data-form-output="form-output-global" data-form-type="contact" method="POST">
                  
                   <div class="row row-22">
                 
@@ -241,7 +241,7 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
 		);
 
 		$userID = $_SESSION['userID'];
-        	$comment = $_POST['comment'];
+        	$message = $_POST['message'];
         	$rating = $_POST['rate'];
 
 		//	ARRAY TO STORE USER REVIEW POST request
@@ -249,7 +249,7 @@ if (!isset($_SESSION["username"]) && !isset($_SESSION["userID"])) {
                 	if (empty($feedbackArray)) {    // Check if array is empty
 
 			$feedbackArray['user_id'] = $userID;
-                    	$feedbackArray['comment'] = $comment;
+                    	$feedbackArray['message'] = $message;
                     	$feedbackArray['rating'] = $rating;
         	}
 
