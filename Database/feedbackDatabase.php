@@ -4,7 +4,7 @@
 /*      FINAL DELIVERABLE: RECEIVING PROCESSED USER FEEDBACK FROM BACKEND       */
 
 
-//      AMQP LIBRARIES
+///      AMQP LIBRARIES
 require_once __DIR__ . '/vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -105,7 +105,7 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
 
 	// Insert the user data into the database
-	$sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating');
+	$sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating')";
 
 	//WHERE id = $userID"
 
