@@ -81,12 +81,12 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
     echo '[+] RECEIVED PROCESSED USER FEEDBACK FROM BACKEND', "\n", $backendMsg->getBody(), "\n\n";
 
     // GETTING VARIABLES SENT FROM BACKEND
-    $userID = $unloadMsg['userID'];
+    //$userID = $unloadMsg['userID'];
     $comment = $unloadMsg['message'];
     $rating = $unloadMsg['rating'];
 
     // JSON variables to String sanitize
-    $stringID = filter_var($userID, FILTER_SANITIZE_STRING);
+    //$stringID = filter_var($userID, FILTER_SANITIZE_STRING);
     $stringComment = filter_var($comment, FILTER_SANITIZE_STRING);
     $stringRating = filter_var($rating, FILTER_SANITIZE_STRING);
 
@@ -106,7 +106,7 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
     if (mysqli_num_rows($userCheckResult) > 0) {
         // User exists, proceed with feedback insertion
-        $sql = "INSERT INTO Feedback (UserID, Comment, Rating) VALUES ('$userID', '$comment', '$rating')";
+        $sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating')";
 
         if (mysqli_query($conn, $sql)) {
             echo "USER FEEDBACK WAS STORED IN FOODQUEST DATABASE";
