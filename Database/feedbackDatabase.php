@@ -100,9 +100,11 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
     // TODO: ADD MYSQL ACCOUNT CONNECTION
     $conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
 
-    // Check if the user exists in the Users table
-    $userCheckResult = mysqli_query($conn, $userCheckQuery);
+   // Check if the user exists in the Users table
+$userCheckQuery = "SELECT * FROM Users WHERE id = '$userID'";
+$userCheckResult = mysqli_query($conn, $userCheckQuery);
 
+if ($userCheckResult) {
     if (mysqli_num_rows($userCheckResult) > 0) {
         // User exists, proceed with feedback insertion
         $sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating')";
@@ -118,6 +120,11 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
         // User does not exist, handle accordingly (e.g., log an error)
         $result = 'FALSE';
     }
+} else {
+    // Handle the case where the query execution fails
+    echo "Error executing user check query: " . mysqli_error($conn);
+    $result = 'FALSE';
+}
 
     // Close the database connection
     mysqli_close($conn);
