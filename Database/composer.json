@@ -1,5 +1,19 @@
 {
+	"IT490-Project": "FoodQuest",
+	"Database Admin": "Henry",
+	"Description":	"Composer Scripts To Run Database Files",
 	"require": {
-		"php-amqplib/php-amqplib": ">=3.2"
+		"php-amqplib/php-amqplib": "^3.2"
+	},
+	"scripts": {
+		"Database Files": "#===== [ Register, Login, Feedback ] =====#",
+		"registerDatabase": "php registerDatabase.php",
+		"loginDatabase": "php loginDatabase.php",
+		"feedbackDatabase": "php feedbackDatabase.php",
+		"runDatabase": [
+			"@registerDatabase",
+			"@loginDatabase",
+			"@feedbackDatabase"
+		]
 	}
 }
