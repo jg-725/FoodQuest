@@ -101,7 +101,7 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
     $conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
 
     // Check if the user exists in the Users table
-    $userCheckQuery = "SELECT id FROM Users WHERE id = '$userID'";
+    //$userCheckQuery = "SELECT id FROM Users WHERE id = '$userID'";
     $userCheckResult = mysqli_query($conn, $userCheckQuery);
 
     if (mysqli_num_rows($userCheckResult) > 0) {
@@ -117,7 +117,7 @@ $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
         }
     } else {
         // User does not exist, handle accordingly (e.g., log an error)
-        echo "Error: User with ID $userID does not exist.";
+        //echo "Error: User with ID $userID does not exist.";
         $result = 'FALSE';
     }
 
