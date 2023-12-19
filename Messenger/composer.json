@@ -1,5 +1,17 @@
 {
-    "require": {
-        "php-amqplib/php-amqplib": "^3.2"
-    }
+	"IT490-Project": "FoodQuest",
+	"RabbitMQ Admin": "Jeffrey Galicia",
+	"Description": "=== RABBITMQ SETUP SCRIPTS ===",
+	"require": {
+                "php-amqplib/php-amqplib": "^3.2"
+        },
+
+	"scripts": {
+		"test": "php --version",
+		"stopRabbitMQ": "sudo systemctl stop rabbitmq-server",
+		"startRabbitMQ": "sudo systemctl start rabbitmq-server",
+		"restartRabbitMQ": "sudo systemctl restart rabbitmq-server",
+		"checkStatus": "sudo systemctl status rabbitmq-server",
+		"checkCluster": "sudo rabbitmqctl cluster_status"
+    	}
 }

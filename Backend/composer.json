@@ -1,5 +1,19 @@
 {
+	"IT490-Project":  "FoodQuest",
+	"Backend Admin":  "Jeffrey",
+	"Description":	  "Composer Script To Run Backend Files",
 	"require": {
-		"php-amqplib/php-amqplib": ">=3.2"
+		"php-amqplib/php-amqplib": "^3.2"
+	},
+	"scripts": {
+		"Backend-Files": "#===== [ Register, Login, Feedback ] =====#",
+		"registerBackend": "php registerBackend.php",
+		"loginBackend": "php loginBackend.php",
+		"feedbackBackend": "php feedbackBackend.php",
+		"runBackend": [
+			"@registerBackend",
+			"@loginBackend",
+			"@feedbackBackend"
+		]
 	}
 }
