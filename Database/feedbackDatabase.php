@@ -74,54 +74,57 @@ echo '[*] Waiting for BACKEND messages. To exit press CTRL+C', "\n\n";
 // CALLBACK RESPONSIBLE FOR PROCESSING INCOMING MESSAGES
 $callbackDBFeedback = function ($backendMsg) use ($DBFeedbackChannel) {
 
-    	$unloadMsg = json_decode($backendMsg->getBody(), true);
+    $unloadMsg = json_decode($backendMsg->getBody(), true);
 
-	print_r($unloadMsg);
+    print_r($unloadMsg);
 
-	echo '[+] RECEIVED PROCESSED USER FEEDBACK FROM BACKEND', "\n", $backendMsg->getBody(), "\n\n";
+    echo '[+] RECEIVED PROCESSED USER FEEDBACK FROM BACKEND', "\n", $backendMsg->getBody(), "\n\n";
 
-    	//    GETTING VARIABLES SENT FROM BACKEND
-	$userID = $unloadMsg['userID'];
-    	$comment = $unloadMsg['message'];
-    	$rating = $unloadMsg['rating'];
+    // GETTING VARIABLES SENT FROM BACKEND
+    $userID = $unloadMsg['userID'];
+    $comment = $unloadMsg['message'];
+    $rating = $unloadMsg['rating'];
 
-    	//  	JSON variables to String sanitize
-	$stringID = filter_var($userID, FILTER_SANITIZE_STRING);
-    	$stringComment = filter_var($comment, FILTER_SANITIZE_STRING);
-    	$stringRating = filter_var($rating, FILTER_SANITIZE_STRING);
+    // JSON variables to String sanitize
+    $stringID = filter_var($userID, FILTER_SANITIZE_STRING);
+    $stringComment = filter_var($comment, FILTER_SANITIZE_STRING);
+    $stringRating = filter_var($rating, FILTER_SANITIZE_STRING);
 
+    /*	ENTER MYSQL CODE HERE	*/
 
-	/*	ENTER MYSQL CODE HERE	*/
+    $servername = "192.168.194.3";
+    $username_db = "test";
+    $password_db = "test";
+    $dbname = "FoodQuest";
 
-	$servername = "192.168.194.3";
- 		   $username_db = "test";
-   		 $password_db = "test";
-  		  $dbname = "FoodQuest";
+    // TODO: ADD MYSQL ACCOUNT CONNECTION
+    $conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
 
+    // Check if the user exists in the Users table
+    $userCheckQuery = "SELECT id FROM Users WHERE id = '$userID'";
+    $userCheckResult = mysqli_query($conn, $userCheckQuery);
 
-	//	TODO: ADD MYSQL ACCOUNT CONNECTION
-	$conn = mysqli_connect($servername, $username_db, $password_db, $dbname);
+    if (mysqli_num_rows($userCheckResult) > 0) {
+        // User exists, proceed with feedback insertion
+        $sql = "INSERT INTO Feedback (UserID, Comment, Rating) VALUES ('$userID', '$comment', '$rating')";
 
+        if (mysqli_query($conn, $sql)) {
+            echo "USER FEEDBACK WAS STORED IN FOODQUEST DATABASE";
+            $result = 'TRUE';
+        } else {
+            echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+            $result = 'FALSE';
+        }
+    } else {
+        // User does not exist, handle accordingly (e.g., log an error)
+        echo "Error: User with ID $userID does not exist.";
+        $result = 'FALSE';
+    }
 
+    // Close the database connection
+    mysqli_close($conn);
 
-	// Insert the user data into the database
-	$sql = "INSERT INTO Feedback (Comment, Rating) VALUES ('$comment', '$rating')";
-
-	//WHERE id = $userID"
-
-	if (mysqli_query($conn, $sql)) {
-    		echo "USER FEEDBACK WAS STORED IN FOODQUEST DATABASE";
-    		$result = 'TRUE';
-	} else {
-    		echo "Error: " . $sql . "<br>" . mysqli_error($conn);
-    		$result = 'FALSE';
-	}
-
-	// Close the database connection
-	mysqli_close($conn);
-
-
-	/*      END OF MYSQL CODE   */
+    /*      END OF MYSQL CODE   */
 
 
 
